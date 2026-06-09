@@ -1,0 +1,279 @@
+
+<!doctype html>
+<html>
+<head>
+<title>OJOL AI ASISTEN</title>
+<meta name="description" content="Gghh" />
+<meta name="robots" content="all,index,follow" /><meta name = "viewport" content = "initial-scale = 1.1, user-scalable = no"><meta charset="UTF-8" />
+<link rel="manifest" href="https://www.socialcreator.com/ojolaiasisten/manifest.json">
+<link rel="apple-touch-icon" href="https://www.socialcreator.com/srv/imgs/gen/91985_ico.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="OJOL AI ASISTEN">
+<link rel="stylesheet" href="https://www.socialcreator.com/w3.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto" type="text/css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+.w3-animate-opacity{-webkit-animation:opac 1s;animation:opac 1s}
+@-webkit-keyframes opac{from{opacity:0} to{opacity:1}}
+@keyframes opac{from{opacity:0} to{opacity:1}}
+
+
+html{min-height:100%;overflow:hidden;}
+body
+{
+margin:0px;padding:0px;font-family:Roboto;}
+
+h1.cab{margin-left:10px;}
+h3.cab{margin-left:10px;}
+.txtgen{font-size:18px;}
+.txtgen2{font-size:16px;}
+@media all and (max-width: 460px)
+{
+	h1.cab{font-size:22px;}
+	h3.cab{font-size:16px;}
+	.txtgen{font-size:16px;}
+	.txtgen2{font-size:16px;}
+}
+
+
+.topcmain{border:0px;transition:background-color 0.2s ease;white-space:nowrap;cursor:pointer;}
+.topcmain:hover{background-color:#939393;}
+@media all and (max-width: 790px)
+{
+	.topcmain:hover{background-color:#939393;}
+}
+
+hr{position:inherit;height: 1px;border: 0;border-top: 1px solid;margin: 1em 0;padding: 0;}
+
+.brillar{opacity: 0.7;transition:opacity 0.2s ease;}
+.brillar:hover{opacity: 1;}
+
+.boton1{
+	padding:10px;
+	font-size:18px;
+	font-family:Roboto;
+	cursor:pointer;
+	transition:background-color 0.2s ease;
+	color:#FFFFFF;
+	background-color:#;
+}
+.boton1:hover{background-color:#1e1e1e;}
+.somb{box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);}
+.tit_card{font-size:18px;margin:5px;}
+.subtit_card{font-size:14px;margin:5px;}
+.fecha_card{font-size:14px;margin:5px;}
+
+.tprodimgs{width:500px;}
+.tprodflecha{left:462px;}
+.mySlidesProd{max-width:490px;}
+.divmapa{width:500px;}
+.videoprod{width:500px;height:375px;}
+@media all and (max-width: 500px)
+{
+	.tprodimgs{width:250px;}
+	.tprodflecha{left:212px;}
+	.mySlidesProd{max-width:240px;}
+	.divmapa{width:250px;}
+	.videoprod{width:250px;height:188px;}
+}
+
+
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width:600px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+	* {
+	    box-sizing: border-box;
+	}
+
+	.row-grid:after {
+	    content: "";
+	    clear: both;
+	    display: block;
+	}
+
+	[class*="col-"] {
+	    float: left;
+	    padding: 15px;
+	    width: 100%;
+	}
+	@media only screen and (min-width: 791px) {
+	    .col-2 {width: 50%;}
+	    .col-3 {width: 33.33%;}
+	    .col-4 {width: 25%;}
+	    .col-5 {width: 20%;}
+	    .col-6 {width: 16.66%;}
+	    .col-7 {width: 14.28%;}
+	    .col-8 {width: 12.5%;}
+	}
+	
+		.centrado1{float:left;position:relative;left:50%;}
+	.centrado2{float:left;position:relative;left:-50%;}
+
+		@media only screen and (min-width: 791px) {
+	    .col-22 {width: auto;}
+	}
+	
+	@media only screen and (min-width: 1116px) {
+	    .col-33 {width: auto;}
+	}
+	@media all and (min-width: 791px)
+	{
+		#ifrprinc{height:100%;width:100%;position:absolute;z-index:-1;top:0px;left:0px;}
+	}
+
+	@media all and (max-width: 790px)
+	{
+		#ifrprinc{height:100%;width:100%;position:absolute;z-index:-1;top:0px;left:0px;}
+	}
+
+</style>
+<script src="https://www.socialcreator.com/jquery-1.11.3.min.js"></script>
+<script src="https://www.socialcreator.com/dom/js_getCookie.js"></script>
+<script language="javascript">
+
+$(document).ready(function(){
+	$(document).click(function() {
+	    $("#avisos").hide();
+	});
+});
+
+function fcaddia(d_str,idaviso)
+{
+	var d_aux = new Date(2000+parseInt(d_str.substr(4,2)),parseInt(d_str.substr(2,2))-1,parseInt(d_str.substr(0,2)),parseInt(d_str.substr(6,2)),parseInt(d_str.substr(8,2)));
+	d_aux.setMinutes(d_aux.getMinutes() - d_aux.getTimezoneOffset());
+	var d_aux_3=new Date(d_aux);
+	d_aux_3.setHours(0,0,0,0);
+
+	var cad_dia="";
+	var today=new Date();
+	today.setHours(0,0,0,0);
+	var yesterday=new Date(today);
+	yesterday.setDate(yesterday.getDate()-1)
+	if(d_aux_3.getTime()==today.getTime()){cad_dia="Today";}
+	else if(d_aux_3.getTime()==yesterday.getTime()){cad_dia="Yesterday";}
+	else
+	{
+		var dia_aux=d_aux_3.getDate();if(dia_aux<10){dia_aux="0"+dia_aux;};
+		var mes_aux=d_aux_3.getMonth()+1;if(mes_aux<10){mes_aux="0"+mes_aux;};
+					cad_dia=mes_aux+"-"+dia_aux+"-"+d_aux_3.getFullYear();
+			};
+	var h_aux=d_aux.getHours();if(h_aux<10){h_aux="0"+h_aux;};
+	var mi_aux=d_aux.getMinutes();if(mi_aux<10){mi_aux="0"+mi_aux;};
+	cad_dia+="&nbsp;"+h_aux+":"+mi_aux;
+
+	$(".fh"+idaviso).html(cad_dia);
+};
+
+function fvisto(id)
+{
+	$(".av_ci"+id).hide();
+	$(".av_cr"+id).hide();
+	var n_aux=$("#av_nnuevos").html()-1;
+	if(n_aux==0){$("#av_nnuevos").hide();}
+	else{$("#av_nnuevos").html(n_aux);};
+    $.ajax({
+      type: "GET",
+      url: "https://www.socialcreator.com/dom/aviso_leido.php?idusu=46517484",
+      data: "avle="+id
+     });
+}
+
+function falert(cad)
+{
+	document.getElementById("modaltxt").innerHTML=cad;
+	document.getElementById('divmodal').style.display="block";
+}
+function fconfirm(cad,f,p)
+{
+	document.getElementById("modaltxtconfirm").innerHTML=cad;
+	$("#btnmodalok").prop('onclick',null).off('click');	$("#btnmodalok").click(function() {
+		$('#divmodalconfirm').hide();
+				if(f.indexOf('@')!=-1)
+		{
+			f=f.split("@");
+			if(f.length==3){self.frames[f[0]][f[1]][f[2]](p);}
+			else if(f.length==2){self.frames[f[0]][f[1]](p);};
+		}
+		else
+		{
+    		window[f](p);
+    	};
+  	});
+	document.getElementById('divmodalconfirm').style.display="block";
+}
+
+
+jQuery(function( $ )
+{
+	
+	});
+</script>
+
+
+</head>
+<body>
+
+
+
+
+<div id="divmodal" class="modal" style="display:none;" onclick="this.style.display='none';">
+  <div id="divmodalcontent" class="modal-content">
+    <span class="close">&times;</span>
+    <p id="modaltxt"></p>
+  </div>
+</div>
+<div id="divmodalconfirm" class="modal" style="display:none;">
+  <div class="modal-content">
+    <p id="modaltxtconfirm"></p>
+    <button class="w3-btn w3-small w3-blue-grey" id="btnmodalok">OK</button>
+    <button class="w3-btn w3-small w3-light-grey" style="margin-left:10px;" onclick="$('#divmodalconfirm').hide();">Cancel</button>
+  </div>
+</div>
+
+
+
+
+	<iframe id="ifrprinc" src="https://www.socialcreator.com/ojolaiasisten/?s=329172&gotourl=1&url=https%3A%2F%2Fojolaiasisten.blogspot.com%2F%3Fm%3D1"></iframe>
+
+
+</body>
+</html>
+
+
