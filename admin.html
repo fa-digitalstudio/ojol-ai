@@ -537,19 +537,43 @@
 
     // --- KONFIGURASI FIREBASE ---
     const firebaseConfig = {
-  apiKey: "AIzaSyBj86r9p6TzIc9TmrXAzQX2LRTe8K7Umro",
-  authDomain: "ojolai.firebaseapp.com",
-  databaseURL: "https://ojolai-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ojolai",
-  storageBucket: "ojolai.firebasestorage.app",
-  messagingSenderId: "7449834990",
-  appId: "1:7449834990:web:53c321edd8d479654f0aff",
-  measurementId: "G-ZEKT2CQD6Q"
-};
+        apiKey: "AIzaSyBj86r9p6TzIc9TmrXAzQX2LRTe8K7Umro",
+        authDomain: "ojolai.firebaseapp.com",
+        databaseURL: "https://ojolai-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "ojolai",
+        storageBucket: "ojolai.firebasestorage.app",
+        messagingSenderId: "7449834990",
+        appId: "1:7449834990:web:53c321edd8d479654f0aff",
+        measurementId: "G-ZEKT2CQD6Q"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
+
+    // ✅ Tambahan: Deteksi pengguna yang login dan simpan datanya otomatis
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            const waktuSekarang = new Date().toLocaleString('id-ID');
+            const userRef = db.ref(`users_auth/${user.uid}`);
+            
+            // Cek apakah data sudah ada, jika belum buat baru
+            userRef.once('value', snapshot => {
+                if (!snapshot.exists()) {
+                    userRef.set({
+                        email: user.email,
+                        nama: user.displayName || 'Belum diisi',
+                        diblokir: false,
+                        dibuat_pada: waktuSekarang,
+                        terakhir_login: waktuSekarang
+                    });
+                } else {
+                    // Update waktu login terakhir
+                    userRef.update({ terakhir_login: waktuSekarang });
+                }
+            });
+        }
+    });
 
     function initFirebase() {
         const statusBox = document.getElementById('db-status');
@@ -667,11 +691,9 @@
         }
     });
 
-    // Ambil daftar pengguna yang terdaftar lewat Firebase Auth
-    // Catatan: Untuk membaca daftar pengguna Auth, Anda butuh Firebase Admin SDK / Cloud Function
-    // Di sini kita simpan data pengguna di Realtime Database sebagai referensi terhubung dengan Auth
+    // ✅ Perbaikan: Ambil semua data pengguna yang sudah terdaftar/login
     function openUserManager() {
-        db.ref('users_auth').once('value', snapshot => {
+        db.ref('users_auth').orderByChild('diblokir').on('value', snapshot => {
             const users = [];
             snapshot.forEach(child => {
                 users.push({ uid: child.key, ...child.val() });
@@ -693,7 +715,7 @@
                     <tbody>`;
 
             if(users.length === 0) {
-                html += `<tr><td colspan="6" style="text-align:center; padding:20px;">Belum ada pengguna terdaftar</td></tr>`;
+                html += `<tr><td colspan="6" style="text-align:center; padding:20px;">Belum ada pengguna terdaftar atau yang pernah login</td></tr>`;
             } else {
                 users.forEach(u => {
                     html += `
@@ -720,6 +742,8 @@
                 showConfirmButton: true,
                 confirmButtonText: 'Tutup'
             });
+        }, (err) => {
+            Swal.fire('Error', 'Gagal memuat data pengguna: ' + err.message, 'error');
         });
     }
 
@@ -756,18 +780,18 @@
                 auth.createUserWithEmailAndPassword(email, password)
                 .then(userCredential => {
                     const user = userCredential.user;
+                    const waktuSekarang = new Date().toLocaleString('id-ID');
                     // Simpan data tambahan ke Realtime Database
                     return db.ref(`users_auth/${user.uid}`).set({
                         nama: nama,
                         email: email,
                         diblokir: false,
-                        dibuat_pada: new Date().toLocaleString('id-ID'),
-                        terakhir_login: "Belum ada"
+                        dibuat_pada: waktuSekarang,
+                        terakhir_login: waktuSekarang
                     });
                 })
                 .then(() => {
-                    Toast.fire({icon: 'success', title: 'Pengguna berhasil didaftarkan'});
-                    openUserManager();
+                    Toast.fire({icon: 'success', title: 'Pengguna berhasil didaftarkan dan muncul di daftar'});
                 })
                 .catch(err => {
                     let pesan = err.message;
@@ -806,29 +830,26 @@
         db.ref(`users_auth/${uid}`).update({ diblokir: statusBaru })
         .then(() => {
             Toast.fire({icon: 'info', title: statusBaru ? 'Pengguna diblokir' : 'Blokir dibuka'});
-            openUserManager();
         })
         .catch(err => {
             Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
         });
     }
 
-    // Hapus akun pengguna
+    // Hapus data pengguna dari database
     function deleteUserAuth(uid) {
         Swal.fire({
             title: 'Hapus Pengguna?',
-            text: "Akun akan dihapus permanen!",
+            text: "Data pengguna akan dihapus dari daftar!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Ya, Hapus',
             cancelButtonText: 'Batal'
         }).then(res => {
             if(res.isConfirmed) {
-                // Hapus data di Realtime Database
                 db.ref(`users_auth/${uid}`).remove()
                 .then(() => {
                     Toast.fire({icon: 'success', title: 'Data pengguna dihapus'});
-                    openUserManager();
                 })
                 .catch(err => {
                     Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
