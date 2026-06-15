@@ -41,11 +41,13 @@
         /* Header & Menu */
         .page-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
             max-width: 520px;
             margin: 0 auto 20px;
             position: relative;
+            /* Awalnya tersembunyi */
+            display: none;
         }
 
         .menu-toggle {
@@ -364,8 +366,7 @@
 <body>
 
 <!-- Header dengan Menu Garis Tiga -->
-<div class="page-header">
-    <div></div>
+<div class="page-header" id="main-header">
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
     <div class="menu-dropdown" id="main-menu">
         <a href="#" onclick="openUserManager()">👤 Kelola Pengguna</a>
@@ -452,18 +453,8 @@
         if(savedPass) {
             document.getElementById('admin_pass').value = atob(savedPass);
             document.getElementById('remember_pass').checked = true;
-        }
-        // Inisialisasi data pengguna jika belum ada
-        if(!localStorage.getItem('user_list')) {
-            const defaultUser = [{
-                id: 1,
-                nama: "Farid Aris",
-                email: "farid@admin.id",
-                password: "adminojolkola",
-                status: "Aktif",
-                terakhir_login: "Belum ada"
-            }];
-            localStorage.setItem('user_list', JSON.stringify(defaultUser));
+            // Jika ada sesi tersimpan, langsung tampilkan menu
+            document.getElementById('main-header').style.display = 'flex';
         }
     };
 
@@ -491,7 +482,10 @@
         const remember = document.getElementById('remember_pass').checked;
 
         if(btoa(input) === _0xPR2) {
-            // Update waktu login terakhir
+            // Tampilkan menu garis tiga setelah login berhasil
+            document.getElementById('main-header').style.display = 'flex';
+            
+            // Update waktu login terakhir ke Firebase
             updateLastLogin("Farid Aris");
 
             if(remember) {
@@ -525,6 +519,10 @@
             cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
+                // Sembunyikan menu saat logout
+                document.getElementById('main-header').style.display = 'none';
+                document.getElementById('main-menu').style.display = 'none';
+                
                 document.getElementById('login-overlay').style.display = 'block';
                 document.getElementById('main-dashboard').style.display = 'none';
                 if(!localStorage.getItem('admin_session_key')) {
@@ -538,6 +536,8 @@
         if (e.key === 'Enter') checkLogin();
     });
 
+    // --- KONFIGURASI FIREBASE ---
+    // Ganti dengan API Key dan data Firebase Anda nanti
     const firebaseConfig = {
         apiKey: "AIzaSyBj86r9p6TzIc9TmrXAzQX2LRTe8K7Umro",
         authDomain: "ojolai.firebaseapp.com",
@@ -568,6 +568,19 @@
         }, (error) => {
             statusBox.innerText = "System Error: " + error.message;
             statusBox.style.color = "#ef4444";
+        });
+
+        // Inisialisasi data pengguna awal jika belum ada di Firebase
+        db.ref('users').once('value', snapshot => {
+            if (!snapshot.exists()) {
+                db.ref('users').push({
+                    nama: "Farid Aris",
+                    email: "farid@admin.id",
+                    password: "adminojolkola",
+                    status: "Aktif",
+                    terakhir_login: "Belum ada"
+                });
+            }
         });
     }
 
@@ -652,7 +665,7 @@
             });
     }
 
-    // --- FUNGSI BARU TAMBAHAN ---
+    // --- FUNGSI BARU TERINTEGRASI DENGAN FIREBASE ---
     function toggleMenu() {
         const menu = document.getElementById('main-menu');
         menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
@@ -665,63 +678,71 @@
         }
     });
 
-    // Update waktu login terakhir
+    // Update waktu login terakhir ke Firebase
     function updateLastLogin(namaPengguna) {
-        const users = JSON.parse(localStorage.getItem('user_list')) || [];
         const waktuSekarang = new Date().toLocaleString('id-ID');
-        const updated = users.map(u => u.nama === namaPengguna ? {...u, terakhir_login: waktuSekarang} : u);
-        localStorage.setItem('user_list', JSON.stringify(updated));
-    }
-
-    // Buka halaman kelola pengguna
-    function openUserManager() {
-        const users = JSON.parse(localStorage.getItem('user_list')) || [];
-        let html = `<button class="add-btn" onclick="addNewUser()">➕ Tambah Pengguna Baru</button>`;
-        html += `<div class="table-container">
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>Nama</th>
-                        <th>Email</th>
-                        <th>Password</th>
-                        <th>Status</th>
-                        <th>Login Terakhir</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-
-        if(users.length === 0) {
-            html += `<tr><td colspan="6" style="text-align:center; padding:20px;">Belum ada data pengguna</td></tr>`;
-        } else {
-            users.forEach(u => {
-                html += `
-                <tr>
-                    <td>${u.nama}</td>
-                    <td>${u.email}</td>
-                    <td>${u.password}</td>
-                    <td>${u.status}</td>
-                    <td>${u.terakhir_login}</td>
-                    <td>
-                        <button class="action-btn edit" onclick="editUser(${u.id})">Ubah</button>
-                        <button class="action-btn block" onclick="toggleBlock(${u.id})">${u.status === 'Aktif' ? 'Blokir' : 'Buka'}</button>
-                        <button class="action-btn delete" onclick="deleteUser(${u.id})">Hapus</button>
-                    </td>
-                </tr>`;
+        db.ref('users').orderByChild('nama').equalTo(namaPengguna).once('value', snapshot => {
+            snapshot.forEach(child => {
+                db.ref(`users/${child.key}`).update({ terakhir_login: waktuSekarang });
             });
-        }
-        html += `</tbody></table></div>`;
-
-        Swal.fire({
-            title: '👤 Kelola Pengguna',
-            html: html,
-            width: '95%',
-            showConfirmButton: true,
-            confirmButtonText: 'Tutup'
         });
     }
 
-    // Tambah pengguna baru
+    // Buka halaman kelola pengguna (ambil data dari Firebase)
+    function openUserManager() {
+        db.ref('users').once('value', snapshot => {
+            const users = [];
+            snapshot.forEach(child => {
+                users.push({ id: child.key, ...child.val() });
+            });
+
+            let html = `<button class="add-btn" onclick="addNewUser()">➕ Tambah Pengguna Baru</button>`;
+            html += `<div class="table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Email</th>
+                            <th>Password</th>
+                            <th>Status</th>
+                            <th>Login Terakhir</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            if(users.length === 0) {
+                html += `<tr><td colspan="6" style="text-align:center; padding:20px;">Belum ada data pengguna</td></tr>`;
+            } else {
+                users.forEach(u => {
+                    html += `
+                    <tr>
+                        <td>${u.nama}</td>
+                        <td>${u.email}</td>
+                        <td>${u.password}</td>
+                        <td>${u.status}</td>
+                        <td>${u.terakhir_login}</td>
+                        <td>
+                            <button class="action-btn edit" onclick="editUser('${u.id}')">Ubah</button>
+                            <button class="action-btn block" onclick="toggleBlock('${u.id}', '${u.status}')">${u.status === 'Aktif' ? 'Blokir' : 'Buka'}</button>
+                            <button class="action-btn delete" onclick="deleteUser('${u.id}')">Hapus</button>
+                        </td>
+                    </tr>`;
+                });
+            }
+            html += `</tbody></table></div>`;
+
+            Swal.fire({
+                title: '👤 Kelola Pengguna',
+                html: html,
+                width: '95%',
+                showConfirmButton: true,
+                confirmButtonText: 'Tutup'
+            });
+        });
+    }
+
+    // Tambah pengguna baru ke Firebase
     function addNewUser() {
         Swal.fire({
             title: 'Tambah Pengguna Baru',
@@ -749,93 +770,107 @@
                 if(!nama || !email || !password) {
                     return Toast.fire({icon: 'error', title: 'Semua kolom harus diisi!'});
                 }
-                const users = JSON.parse(localStorage.getItem('user_list')) || [];
-                const newId = users.length ? Math.max(...users.map(u => u.id)) + 1 : 1;
-                users.push({
-                    id: newId,
+
+                db.ref('users').push({
                     nama: nama,
                     email: email,
                     password: password,
                     status: "Aktif",
                     terakhir_login: "Belum ada"
+                })
+                .then(() => {
+                    Toast.fire({icon: 'success', title: 'Pengguna berhasil ditambahkan'});
+                    openUserManager();
+                })
+                .catch(err => {
+                    Toast.fire({icon: 'error', title: 'Gagal menyimpan: ' + err.message});
                 });
-                localStorage.setItem('user_list', JSON.stringify(users));
-                Toast.fire({icon: 'success', title: 'Pengguna berhasil ditambahkan'});
-                openUserManager();
             }
         });
     }
 
-    // Edit data pengguna
+    // Edit data pengguna di Firebase
     function editUser(userId) {
-        const users = JSON.parse(localStorage.getItem('user_list')) || [];
-        const user = users.find(u => u.id === userId);
-        if(!user) return;
+        db.ref(`users/${userId}`).once('value', snapshot => {
+            const user = snapshot.val();
+            if(!user) return;
 
-        Swal.fire({
-            title: 'Ubah Data Pengguna',
-            html: `
-                <div style="text-align:left; margin-top:10px;">
-                    <label style="font-size:13px; text-transform:none; margin-bottom:4px;">Nama Lengkap</label>
-                    <input id="edit_nama" class="swal2-input" value="${user.nama}">
-                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Email</label>
-                    <input id="edit_email" class="swal2-input" value="${user.email}">
-                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Password</label>
-                    <input id="edit_pass" class="swal2-input" type="password" value="${user.password}">
-                </div>
-            `,
-            focusConfirm: false,
-            preConfirm: () => {
-                return {
-                    nama: document.getElementById('edit_nama').value.trim(),
-                    email: document.getElementById('edit_email').value.trim(),
-                    password: document.getElementById('edit_pass').value.trim()
+            Swal.fire({
+                title: 'Ubah Data Pengguna',
+                html: `
+                    <div style="text-align:left; margin-top:10px;">
+                        <label style="font-size:13px; text-transform:none; margin-bottom:4px;">Nama Lengkap</label>
+                        <input id="edit_nama" class="swal2-input" value="${user.nama}">
+                        <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Email</label>
+                        <input id="edit_email" class="swal2-input" value="${user.email}">
+                        <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Password</label>
+                        <input id="edit_pass" class="swal2-input" type="password" value="${user.password}">
+                    </div>
+                `,
+                focusConfirm: false,
+                preConfirm: () => {
+                    return {
+                        nama: document.getElementById('edit_nama').value.trim(),
+                        email: document.getElementById('edit_email').value.trim(),
+                        password: document.getElementById('edit_pass').value.trim()
+                    }
                 }
-            }
-        }).then((result) => {
-            if(result.isConfirmed) {
-                const {nama, email, password} = result.value;
-                if(!nama || !email || !password) {
-                    return Toast.fire({icon: 'error', title: 'Semua kolom harus diisi!'});
+            }).then((result) => {
+                if(result.isConfirmed) {
+                    const {nama, email, password} = result.value;
+                    if(!nama || !email || !password) {
+                        return Toast.fire({icon: 'error', title: 'Semua kolom harus diisi!'});
+                    }
+
+                    db.ref(`users/${userId}`).update({
+                        nama: nama,
+                        email: email,
+                        password: password
+                    })
+                    .then(() => {
+                        Toast.fire({icon: 'success', title: 'Data berhasil diperbarui'});
+                        openUserManager();
+                    })
+                    .catch(err => {
+                        Toast.fire({icon: 'error', title: 'Gagal menyimpan: ' + err.message});
+                    });
                 }
-                const updated = users.map(u => u.id === userId ? {...u, nama, email, password} : u);
-                localStorage.setItem('user_list', JSON.stringify(updated));
-                Toast.fire({icon: 'success', title: 'Data berhasil diperbarui'});
-                openUserManager();
-            }
+            });
         });
     }
 
-    // Blokir / Buka blokir
-    function toggleBlock(userId) {
-        const users = JSON.parse(localStorage.getItem('user_list')) || [];
-        const updated = users.map(u => {
-            if(u.id === userId) {
-                return {...u, status: u.status === 'Aktif' ? 'Diblokir' : 'Aktif'};
-            }
-            return u;
+    // Blokir / Buka blokir pengguna di Firebase
+    function toggleBlock(userId, statusSekarang) {
+        const statusBaru = statusSekarang === 'Aktif' ? 'Diblokir' : 'Aktif';
+        db.ref(`users/${userId}`).update({ status: statusBaru })
+        .then(() => {
+            Toast.fire({icon: 'info', title: 'Status pengguna diperbarui'});
+            openUserManager();
+        })
+        .catch(err => {
+            Toast.fire({icon: 'error', title: 'Gagal mengubah status: ' + err.message});
         });
-        localStorage.setItem('user_list', JSON.stringify(updated));
-        Toast.fire({icon: 'info', title: 'Status pengguna diperbarui'});
-        openUserManager();
     }
 
-    // Hapus pengguna
+    // Hapus pengguna dari Firebase
     function deleteUser(userId) {
         Swal.fire({
             title: 'Hapus Pengguna?',
-            text: "Data akan dihapus permanen!",
+            text: "Data akan dihapus permanen dari database!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Ya, Hapus',
             cancelButtonText: 'Batal'
         }).then((res) => {
             if(res.isConfirmed) {
-                const users = JSON.parse(localStorage.getItem('user_list')) || [];
-                const filtered = users.filter(u => u.id !== userId);
-                localStorage.setItem('user_list', JSON.stringify(filtered));
-                Toast.fire({icon: 'success', title: 'Pengguna dihapus'});
-                openUserManager();
+                db.ref(`users/${userId}`).remove()
+                .then(() => {
+                    Toast.fire({icon: 'success', title: 'Pengguna dihapus'});
+                    openUserManager();
+                })
+                .catch(err => {
+                    Toast.fire({icon: 'error', title: 'Gagal menghapus: ' + err.message});
+                });
             }
         });
     }
