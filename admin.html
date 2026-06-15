@@ -686,9 +686,10 @@
         }
     });
 
-    // ✅ Menu: Riwayat Login
+    // ✅ Menu: Riwayat Login - PERBAIKAN BACA SEMUA DATA
     function openRiwayatLogin() {
-        db.ref('users_auth').orderByChild('terakhir_login').once('value', snapshot => {
+        // Gunakan on() untuk membaca semua data secara terus-menerus
+        db.ref('users_auth').orderByChild('terakhir_login').on('value', snapshot => {
             const users = [];
             snapshot.forEach(child => {
                 users.push({ uid: child.key, ...child.val() });
@@ -712,7 +713,7 @@
                 users.forEach(u => {
                     html += `
                     <tr>
-                        <td>${u.email}</td>
+                        <td>${u.email || '-'}</td>
                         <td>${u.nama || '-'}</td>
                         <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
                         <td>${u.terakhir_login || 'Belum ada'}</td>
@@ -728,12 +729,15 @@
                 showConfirmButton: true,
                 confirmButtonText: 'Tutup'
             });
+        }, (err) => {
+            Swal.fire('Error', 'Gagal memuat data: ' + err.message, 'error');
         });
     }
 
-    // ✅ Menu: Daftar Pengguna
+    // ✅ Menu: Daftar Pengguna - PERBAIKAN BACA SEMUA DATA
     function openDaftarPengguna() {
-        db.ref('users_auth').orderByChild('nama').once('value', snapshot => {
+        // Gunakan on() untuk membaca semua data secara terus-menerus
+        db.ref('users_auth').orderByChild('nama').on('value', snapshot => {
             const users = [];
             snapshot.forEach(child => {
                 users.push({ uid: child.key, ...child.val() });
@@ -758,12 +762,12 @@
                 users.forEach(u => {
                     html += `
                     <tr>
-                        <td>${u.email}</td>
+                        <td>${u.email || '-'}</td>
                         <td>${u.nama || '-'}</td>
                         <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
                         <td>
-                            <button class="action-btn edit" onclick="editUser('${u.uid}', '${u.nama}', '${u.email}')">Ubah</button>
-                            <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir})">${u.diblokir ? 'Buka' : 'Blokir'}</button>
+                            <button class="action-btn edit" onclick="editUser('${u.uid}', '${u.nama || ''}', '${u.email || ''}')">Ubah</button>
+                            <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir || false})">${u.diblokir ? 'Buka' : 'Blokir'}</button>
                             <button class="action-btn delete" onclick="deleteUserAuth('${u.uid}')">Hapus</button>
                         </td>
                     </tr>`;
@@ -778,6 +782,8 @@
                 showConfirmButton: true,
                 confirmButtonText: 'Tutup'
             });
+        }, (err) => {
+            Swal.fire('Error', 'Gagal memuat data: ' + err.message, 'error');
         });
     }
 
@@ -824,7 +830,6 @@
                 })
                 .then(() => {
                     Toast.fire({icon: 'success', title: 'Pengguna berhasil ditambahkan'});
-                    openDaftarPengguna();
                 })
                 .catch(err => {
                     let pesan = err.message;
@@ -862,7 +867,6 @@
                 db.ref(`users_auth/${uid}`).update({ nama: nama })
                 .then(() => {
                     Toast.fire({icon: 'success', title: 'Data berhasil diperbarui'});
-                    openDaftarPengguna();
                 })
                 .catch(err => {
                     Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
@@ -877,7 +881,6 @@
         db.ref(`users_auth/${uid}`).update({ diblokir: statusBaru })
         .then(() => {
             Toast.fire({icon: 'info', title: statusBaru ? 'Pengguna diblokir' : 'Blokir dibuka'});
-            openDaftarPengguna();
         })
         .catch(err => {
             Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
@@ -898,7 +901,6 @@
                 db.ref(`users_auth/${uid}`).remove()
                 .then(() => {
                     Toast.fire({icon: 'success', title: 'Pengguna dihapus'});
-                    openDaftarPengguna();
                 })
                 .catch(err => {
                     Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
