@@ -47,7 +47,7 @@
             max-width: 520px;
             margin: 0 auto 20px;
             position: relative;
-            display: none; /* Awalnya tersembunyi */
+            display: none;
         }
 
         .menu-toggle {
@@ -446,7 +446,6 @@
 </div>
 
 <script>
-    // Kode asli TETAP UTUH dan TIDAK DIUBAH
     const _0xPR2 = "YWRtaW5vam9sa29sYWth"; 
 
     window.onload = () => {
@@ -688,12 +687,22 @@
 
     // ✅ Menu: Riwayat Login - PERBAIKAN BACA SEMUA DATA
     function openRiwayatLogin() {
-        // Gunakan on() untuk membaca semua data secara terus-menerus
-        db.ref('users_auth').orderByChild('terakhir_login').on('value', snapshot => {
+        // Ambil SEMUA data tanpa filter urutan terlebih dahulu
+        db.ref('users_auth').once('value', snapshot => {
             const users = [];
             snapshot.forEach(child => {
-                users.push({ uid: child.key, ...child.val() });
+                const data = child.val() || {};
+                users.push({
+                    uid: child.key,
+                    email: data.email || '-',
+                    nama: data.nama || 'Belum diisi',
+                    diblokir: data.diblokir === true,
+                    terakhir_login: data.terakhir_login || 'Belum ada'
+                });
             });
+
+            // Urutkan dari yang terakhir login
+            users.sort((a, b) => new Date(b.terakhir_login) - new Date(a.terakhir_login));
 
             let html = `<div class="table-container">
                 <table class="history-table">
@@ -713,10 +722,10 @@
                 users.forEach(u => {
                     html += `
                     <tr>
-                        <td>${u.email || '-'}</td>
-                        <td>${u.nama || '-'}</td>
+                        <td>${u.email}</td>
+                        <td>${u.nama}</td>
                         <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
-                        <td>${u.terakhir_login || 'Belum ada'}</td>
+                        <td>${u.terakhir_login}</td>
                     </tr>`;
                 });
             }
@@ -734,13 +743,19 @@
         });
     }
 
-    // ✅ Menu: Daftar Pengguna - PERBAIKAN BACA SEMUA DATA
+    // ✅ Menu: Daftar Pengguna - PERBAIKAN BACA SEMUA DATA + FUNGSI AKSI
     function openDaftarPengguna() {
-        // Gunakan on() untuk membaca semua data secara terus-menerus
-        db.ref('users_auth').orderByChild('nama').on('value', snapshot => {
+        // Ambil SEMUA data pengguna
+        db.ref('users_auth').once('value', snapshot => {
             const users = [];
             snapshot.forEach(child => {
-                users.push({ uid: child.key, ...child.val() });
+                const data = child.val() || {};
+                users.push({
+                    uid: child.key,
+                    email: data.email || '-',
+                    nama: data.nama || 'Belum diisi',
+                    diblokir: data.diblokir === true
+                });
             });
 
             let html = `<button class="add-btn" onclick="addNewUserAuth()">➕ Tambah Pengguna Baru</button>`;
@@ -762,12 +777,12 @@
                 users.forEach(u => {
                     html += `
                     <tr>
-                        <td>${u.email || '-'}</td>
-                        <td>${u.nama || '-'}</td>
+                        <td>${u.email}</td>
+                        <td>${u.nama}</td>
                         <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
                         <td>
-                            <button class="action-btn edit" onclick="editUser('${u.uid}', '${u.nama || ''}', '${u.email || ''}')">Ubah</button>
-                            <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir || false})">${u.diblokir ? 'Buka' : 'Blokir'}</button>
+                            <button class="action-btn edit" onclick="editUser('${u.uid}', '${u.nama.replace(/'/g, "\\'")}', '${u.email.replace(/'/g, "\\'")}')">Ubah</button>
+                            <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir})">${u.diblokir ? 'Buka Blokir' : 'Blokir'}</button>
                             <button class="action-btn delete" onclick="deleteUserAuth('${u.uid}')">Hapus</button>
                         </td>
                     </tr>`;
@@ -830,6 +845,7 @@
                 })
                 .then(() => {
                     Toast.fire({icon: 'success', title: 'Pengguna berhasil ditambahkan'});
+                    openDaftarPengguna();
                 })
                 .catch(err => {
                     let pesan = err.message;
@@ -840,7 +856,7 @@
         });
     }
 
-    // ✅ Edit Pengguna
+    // ✅ Edit Pengguna - DIPERBAIKI
     function editUser(uid, namaLama, emailLama) {
         Swal.fire({
             title: 'Ubah Data Pengguna',
@@ -864,9 +880,11 @@
                 if(!nama) {
                     return Toast.fire({icon: 'error', title: 'Nama tidak boleh kosong'});
                 }
+                // Simpan perubahan ke Firebase
                 db.ref(`users_auth/${uid}`).update({ nama: nama })
                 .then(() => {
                     Toast.fire({icon: 'success', title: 'Data berhasil diperbarui'});
+                    openDaftarPengguna(); // Muat ulang daftar
                 })
                 .catch(err => {
                     Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
@@ -875,23 +893,24 @@
         });
     }
 
-    // ✅ Blokir / Buka Blokir
+    // ✅ Blokir / Buka Blokir - DIPERBAIKI
     function toggleBlockAuth(uid, statusSekarang) {
         const statusBaru = !statusSekarang;
         db.ref(`users_auth/${uid}`).update({ diblokir: statusBaru })
         .then(() => {
-            Toast.fire({icon: 'info', title: statusBaru ? 'Pengguna diblokir' : 'Blokir dibuka'});
+            Toast.fire({icon: 'info', title: statusBaru ? 'Pengguna berhasil diblokir' : 'Blokir berhasil dibuka'});
+            openDaftarPengguna(); // Muat ulang daftar
         })
         .catch(err => {
             Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
         });
     }
 
-    // ✅ Hapus Pengguna
+    // ✅ Hapus Pengguna - DIPERBAIKI
     function deleteUserAuth(uid) {
         Swal.fire({
             title: 'Hapus Pengguna?',
-            text: "Data akan dihapus permanen!",
+            text: "Data akan dihapus permanen dari database!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Ya, Hapus',
@@ -900,7 +919,8 @@
             if(res.isConfirmed) {
                 db.ref(`users_auth/${uid}`).remove()
                 .then(() => {
-                    Toast.fire({icon: 'success', title: 'Pengguna dihapus'});
+                    Toast.fire({icon: 'success', title: 'Pengguna berhasil dihapus'});
+                    openDaftarPengguna(); // Muat ulang daftar
                 })
                 .catch(err => {
                     Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
