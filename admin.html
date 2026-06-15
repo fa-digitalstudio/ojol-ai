@@ -302,7 +302,7 @@
         }
         .history-table {
             width: 100%;
-            min-width: 650px;
+            min-width: 750px;
             border-collapse: collapse;
             font-size: clamp(11px, 2.5vw, 12px);
         }
@@ -317,50 +317,6 @@
             font-weight: 700;
             white-space: nowrap;
         }
-        .action-btn {
-            padding: 6px 8px;
-            border: none;
-            border-radius: 6px;
-            font-size: clamp(10px, 2.2vw, 11px);
-            cursor: pointer;
-            margin: 2px;
-            font-weight: 600;
-        }
-        .edit { background: #3b82f6; color: white; }
-        .block { background: #f59e0b; color: white; }
-        .delete { background: var(--danger); color: white; }
-        .add-btn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: clamp(12px, 2.8vw, 13px);
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 12px;
-            width: 100%;
-            max-width: 220px;
-        }
-
-        /* Khusus Layar Lebih Besar */
-        @media (min-width: 768px) {
-            body {
-                padding: 32px;
-            }
-            .page-header {
-                max-width: 600px;
-            }
-            .card, #login-overlay {
-                max-width: 600px;
-            }
-            .input-wrapper {
-                flex-wrap: nowrap;
-            }
-            .add-btn {
-                width: auto;
-            }
-        }
     </style>
 </head>
 <body>
@@ -369,8 +325,8 @@
 <div class="page-header" id="main-header">
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
     <div class="menu-dropdown" id="main-menu">
+        <!-- ✅ Hapus menu Daftar Pengguna, hanya Riwayat Login yang tersisa -->
         <a href="#" onclick="openRiwayatLogin()">📋 Riwayat Login</a>
-        <a href="#" onclick="openDaftarPengguna()">👥 Daftar Pengguna</a>
     </div>
 </div>
 
@@ -562,7 +518,8 @@
                         provider: user.providerData[0]?.providerId || 'email',
                         diblokir: false,
                         dibuat_pada: waktuSekarang,
-                        terakhir_login: waktuSekarang
+                        terakhir_login: waktuSekarang,
+                        password: '-' // placeholder, akan diisi saat buat akun baru
                     });
                 } else {
                     // Cek apakah pengguna diblokir
@@ -653,7 +610,7 @@
         if(!e.target.matches('.menu-toggle')) document.getElementById('main-menu').style.display = 'none';
     });
 
-    // ✅ Riwayat Login
+    // ✅ Riwayat Login - DITAMBAH kolom Password
     function openRiwayatLogin() {
         db.ref('users_auth').once('value')
         .then(snap => {
@@ -663,6 +620,7 @@
                 users.push({
                     email: d.email || '-',
                     nama: d.nama || 'Belum diisi',
+                    password: d.password || '-',
                     diblokir: !!d.diblokir,
                     terakhir_login: d.terakhir_login || '-'
                 });
@@ -670,137 +628,15 @@
             users.sort((a,b) => new Date(b.terakhir_login) - new Date(a.terakhir_login));
 
             let html = `<div class="table-container"><table class="history-table">
-                <thead><tr><th>Email</th><th>Nama</th><th>Status</th><th>Terakhir Login</th></tr></thead><tbody>`;
-            if(users.length === 0) html += `<tr><td colspan="4" style="text-align:center; padding:20px;">Belum ada data</td></tr>`;
-            else users.forEach(u => html += `<tr><td>${u.email}</td><td>${u.nama}</td><td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td><td>${u.terakhir_login}</td></tr>`);
+                <thead><tr><th>Email</th><th>Nama</th><th>Password</th><th>Status</th><th>Terakhir Login</th></tr></thead><tbody>`;
+            if(users.length === 0) html += `<tr><td colspan="5" style="text-align:center; padding:20px;">Belum ada data</td></tr>`;
+            else users.forEach(u => html += `<tr><td>${u.email}</td><td>${u.nama}</td><td>${u.password}</td><td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td><td>${u.terakhir_login}</td></tr>`);
             html += `</tbody></table></div>`;
             Swal.fire({ title: '📋 Riwayat Login', html, width: '95%', confirmButtonText: 'Tutup' });
         })
         .catch(err => Swal.fire('Error', 'Gagal baca data: ' + err.message, 'error'));
     }
 
-    // ✅ Daftar Pengguna
-    function openDaftarPengguna() {
-        db.ref('users_auth').once('value')
-        .then(snap => {
-            const users = [];
-            snap.forEach(child => {
-                const d = child.val() || {};
-                users.push({
-                    uid: child.key,
-                    email: d.email || '-',
-                    nama: d.nama || 'Belum diisi',
-                    diblokir: !!d.diblokir
-                });
-            });
-
-            let html = `<button class="add-btn" onclick="addNewUserAuth()">➕ Tambah Pengguna</button>
-            <div class="table-container"><table class="history-table">
-                <thead><tr><th>Email</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
-
-            if(users.length === 0) html += `<tr><td colspan="4" style="text-align:center; padding:20px;">Belum ada pengguna</td></tr>`;
-            else users.forEach(u => {
-                const namaAman = u.nama.replace(/'/g, "\\'");
-                const emailAman = u.email.replace(/'/g, "\\'");
-                html += `<tr>
-                    <td>${u.email}</td>
-                    <td>${u.nama}</td>
-                    <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
-                    <td>
-                        <button class="action-btn edit" onclick="editUser('${u.uid}', '${namaAman}', '${emailAman}')">Ubah</button>
-                        <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir})">${u.diblokir ? 'Buka' : 'Blokir'}</button>
-                        <button class="action-btn delete" onclick="deleteUserAuth('${u.uid}', '${u.email}')">Hapus</button>
-                    </td>
-                </tr>`;
-            });
-
-            html += `</tbody></table></div>`;
-            Swal.fire({ title: '👥 Daftar Pengguna', html, width: '95%', confirmButtonText: 'Tutup' });
-        })
-        .catch(err => Swal.fire('Error', 'Gagal baca data: ' + err.message, 'error'));
-    }
-
-    // ✅ Tambah Pengguna
-    function addNewUserAuth() {
-        Swal.fire({
-            title: 'Tambah Pengguna',
-            html: `<div style="text-align:left;">
-                <input id="nama_baru" class="swal2-input" placeholder="Nama Lengkap">
-                <input id="email_baru" class="swal2-input" placeholder="Email">
-                <input id="pass_baru" class="swal2-input" type="password" placeholder="Password (min 6 karakter)">
-            </div>`,
-            focusConfirm: false,
-            preConfirm: () => ({
-                nama: document.getElementById('nama_baru').value.trim(),
-                email: document.getElementById('email_baru').value.trim(),
-                password: document.getElementById('pass_baru').value.trim()
-            })
-        }).then(res => {
-            if(!res.isConfirmed) return;
-            const {nama, email, password} = res.value;
-            if(!nama || !email || password.length < 6) return Toast.fire({icon:'error', title:'Isi semua kolom dengan benar'});
-
-            auth.createUserWithEmailAndPassword(email, password)
-            .then(akun => {
-                const waktuSekarang = new Date().toLocaleString('id-ID');
-                return db.ref(`users_auth/${akun.user.uid}`).set({
-                    nama, email, diblokir: false, dibuat_pada: waktuSekarang, terakhir_login: '-'
-                });
-            })
-            .then(() => { Toast.fire({icon:'success', title:'Pengguna ditambahkan'}); openDaftarPengguna(); })
-            .catch(err => Toast.fire({icon:'error', title:'Gagal: ' + err.message}));
-        });
-    }
-
-    // ✅ Edit Pengguna
-    function editUser(uid, namaLama, emailLama) {
-        Swal.fire({
-            title: 'Ubah Nama',
-            html: `<input id="edit_nama" class="swal2-input" value="${namaLama}">`,
-            preConfirm: () => document.getElementById('edit_nama').value.trim()
-        }).then(res => {
-            if(!res.isConfirmed || !res.value) return;
-            db.ref(`users_auth/${uid}`).update({ nama: res.value })
-            .then(() => { Toast.fire({icon:'success', title:'Data diperbarui'}); openDaftarPengguna(); })
-            .catch(err => Toast.fire({icon:'error', title:'Gagal: ' + err.message}));
-        });
-    }
-
-    // ✅ Blokir/Buka Blokir (Fungsi DIPERBAIKI)
-    function toggleBlockAuth(uid, statusSekarang) {
-        const statusBaru = !statusSekarang;
-        db.ref(`users_auth/${uid}`).update({ diblokir: statusBaru })
-        .then(() => {
-            Toast.fire({
-                icon: statusBaru ? 'warning' : 'success', 
-                title: statusBaru ? '✅ Pengguna DIBLOKIR' : '✅ Blokir DIBUKA'
-            });
-            openDaftarPengguna();
-        })
-        .catch(err => Toast.fire({icon:'error', title:'Gagal: ' + err.message}));
-    }
-
-    // ✅ Hapus Pengguna (Fungsi DIPERBAIKI)
-    function deleteUserAuth(uid, email) {
-        Swal.fire({ 
-            title: 'Hapus Pengguna?', 
-            text: `Akun ${email} akan dihapus PERMANEN dari sistem!`, 
-            icon: 'warning', 
-            showCancelButton: true,
-            confirmButtonText: 'Ya, Hapus',
-            cancelButtonText: 'Batal'
-        }).then(res => {
-            if(!res.isConfirmed) return;
-            
-            // Hapus dari database dulu
-            db.ref(`users_auth/${uid}`).remove()
-            .then(() => {
-                Toast.fire({icon:'success', title:'✅ Data pengguna dihapus dari database'});
-                openDaftarPengguna();
-            })
-            .catch(err => Toast.fire({icon:'error', title:'Gagal: ' + err.message}));
-        });
-    }
 </script>
 </body>
 </html>
