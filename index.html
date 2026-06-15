@@ -244,11 +244,44 @@
         .swal2-popup { border-radius: 25px !important; font-family: 'Outfit', sans-serif !important; }
         @keyframes gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        #login-overlay { position: fixed; inset: 0; backdrop-filter: blur(20px); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-card { background: var(--glass); border: 1px solid var(--glass-border); padding: 40px; border-radius: 35px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
-        .login-card h2 { font-weight: 700; color: #1e293b; margin-bottom: 5px; letter-spacing: -1px; font-size: 28px; }
-        .branding { font-size: 0.8rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 30px; }
-        .btn-google { background: #1e293b; color: white; border: none; width: 100%; padding: 18px; border-radius: 18px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s ease; font-size: 17px; }
+        /* ------------------ LOGIN BARU EMAIL/PASSWORD ------------------ */
+        #login-overlay { 
+            position: fixed; inset: 0; backdrop-filter: blur(20px); 
+            display: flex; justify-content: center; align-items: center; z-index: 9999; 
+            padding: 20px;
+        }
+        .login-card { 
+            background: var(--glass); border: 1px solid var(--glass-border); 
+            padding: 35px 30px; border-radius: 35px; width: 100%; max-width: 420px; 
+            text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
+            animation: scaleIn 0.5s ease;
+        }
+        .login-card h2 { font-weight: 700; color: #1e293b; margin-bottom: 8px; letter-spacing: -1px; font-size: 28px; }
+        .branding { font-size: 0.8rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 25px; }
+        .form-group { text-align: left; margin-bottom: 18px; position: relative; }
+        .form-group label { font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; display: block; }
+        .form-group input { 
+            width: 100%; padding: 14px 16px; padding-right: 42px; border-radius: 14px; 
+            border: 1.5px solid #e2e8f0; background: #f8fafc; outline: none; 
+            font-family: inherit; font-size: 15px; transition: 0.2s;
+        }
+        .form-group input:focus { border-color: #6366f1; background: #fff; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+        .pwd-toggle { 
+            position: absolute; right: 12px; top: 36px; background: none; border: none; 
+            color: #94a3b8; cursor: pointer; display: flex; align-items: center;
+        }
+        .btn-login { 
+            width: 100%; padding: 15px; border-radius: 16px; border: none; 
+            background: linear-gradient(135deg, #6366f1, #4f46e5); 
+            color: white; font-weight: 600; cursor: pointer; font-size: 16px;
+            transition: 0.3s ease; margin-top: 10px;
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.3); }
+        .btn-login:active { transform: translateY(0); }
+        .link-text { font-size: 14px; margin-top: 18px; color: #64748b; }
+        .link-text a { color: #6366f1; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .link-text a:hover { text-decoration: underline; }
+        /* --------------------------------------------------------------- */
 
         .app-container { width: 100%; height: 100%; display: none; flex-direction: column; position: relative; }
         header { 
@@ -267,7 +300,7 @@
         .user-message { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border-bottom-right-radius: 4px; }
         .ai-message { background: var(--glass); border: 1px solid var(--glass-border); border-bottom-left-radius: 4px; color: #1e293b; backdrop-filter: blur(5px); white-space: normal; }
 
-        .chat-img-render { max-width: 100%; border-radius: 15px; margin: 10px 0; cursor: zoom-in; display: block; border: 2px solid rgba(255,255,255,0.2); transition: transform 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .chat-img-render { max-width: 100%; border-radius: 15px; margin: 10px 0; cursor: zoom-in; display: block; border: 2px solid rgba(255,255,255,0.2); transition: transform: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .chat-img-render:hover { transform: scale(1.02); }
 
         .suggestions-container { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 500px; margin-top: 15px; }
@@ -465,14 +498,53 @@
         </div>
     </div>
 
+    <!-- FORM LOGIN EMAIL/PASSWORD -->
     <div id='login-overlay'>
         <div class='login-card'>
             <h2>OJOL AI</h2>
             <div class='branding'>Developed by Farid Aris</div>
-            <p style='font-size: 14px; color: #64748b; margin-bottom: 20px; line-height: 1.5;'>Silahkan login terlebih dahulu untuk menikmati fitur AI OJOL</p>
-            <button class='btn-google' onclick='loginGoogle()'>
-                <img src='https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png' style='width:18px;'/> Sign in with Google
-            </button>
+
+            <div id="login-form">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" placeholder="Masukkan email Anda" required>
+                </div>
+                <div class="form-group">
+                    <label>Kata Sandi</label>
+                    <input type="password" id="password" placeholder="Masukkan kata sandi" required>
+                    <button class="pwd-toggle" onclick="toggleView('password')"><i data-lucide='eye' size='18'></i></button>
+                </div>
+                <button class="btn-login" onclick="loginEmail()">Masuk</button>
+                <div class="link-text">Belum punya akun? <a onclick="showRegister()">Daftar Sekarang</a></div>
+                <div class="link-text" style="margin-top: 8px;"><a onclick="showForgot()">Lupa Kata Sandi?</a></div>
+            </div>
+
+            <div id="register-form" style="display: none;">
+                <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" id="reg-name" placeholder="Masukkan nama lengkap" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="reg-email" placeholder="Masukkan email aktif" required>
+                </div>
+                <div class="form-group">
+                    <label>Kata Sandi</label>
+                    <input type="password" id="reg-password" placeholder="Minimal 6 karakter" required>
+                    <button class="pwd-toggle" onclick="toggleView('reg-password')"><i data-lucide='eye' size='18'></i></button>
+                </div>
+                <button class="btn-login" onclick="registerEmail()">Daftar Akun</button>
+                <div class="link-text">Sudah punya akun? <a onclick="showLogin()">Masuk</a></div>
+            </div>
+
+            <div id="forgot-form" style="display: none;">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="forgot-email" placeholder="Masukkan email Anda" required>
+                </div>
+                <button class="btn-login" onclick="resetPassword()">Kirim Link Reset</button>
+                <div class="link-text"><a onclick="showLogin()">Kembali ke Halaman Masuk</a></div>
+            </div>
         </div>
     </div>
     
@@ -636,7 +708,7 @@
                     <i color='#1e293b' data-lucide='menu' size='24'></i>
                 </button>
                 <div id='user-avatar-container' style='width:38px; height:38px; background:white; border-radius:12px; display:flex; align-items:center; justify-content:center; color:white; overflow:hidden;'>
-                    <img id='header-bot-icon' src='133142.png' style='width:100%; height:100%; object-fit:contain; padding:2px;'/>
+                    <img id='header-bot-icon' src='https://i.ibb.co.com/cSR6TWgd/20260514-222136.png' style='width:100%; height:100%; object-fit:contain; padding:2px;'/>
                 </div>
                 <b id='user-greeting' style='color:#1e293b; font-size:18px;'>OJOL AI</b>
             </div>
@@ -707,15 +779,15 @@
 
     <script type='text/javascript'>
         const firebaseConfig = {
-  apiKey: "AIzaSyBj86r9p6TzIc9TmrXAzQX2LRTe8K7Umro",
-  authDomain: "ojolai.firebaseapp.com",
-  databaseURL: "https://ojolai-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ojolai",
-  storageBucket: "ojolai.firebasestorage.app",
-  messagingSenderId: "7449834990",
-  appId: "1:7449834990:web:53c321edd8d479654f0aff",
-  measurementId: "G-ZEKT2CQD6Q"
-};
+            apiKey: "AIzaSyBj86r9p6TzIc9TmrXAzQX2LRTe8K7Umro",
+            authDomain: "ojolai.firebaseapp.com",
+            databaseURL: "https://ojolai-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ojolai",
+            storageBucket: "ojolai.firebasestorage.app",
+            messagingSenderId: "7449834990",
+            appId: "1:7449834990:web:53c321edd8d479654f0aff",
+            measurementId: "G-ZEKT2CQD6Q"
+        };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
@@ -746,7 +818,6 @@
                         return;
                     }
                     if (data.openrouter_key) DEFAULTS.openrouter = data.openrouter_key;
-                    
                     if (data.groq_key) DEFAULTS.api = data.groq_key;
                     if (data.gemini_key) DEFAULTS.gemini = data.gemini_key;
 
@@ -900,7 +971,7 @@
         function showAbout() {
             Swal.fire({
                 title: 'Tentang OJOL AI',
-                html: `<div style="text-align: center;"><div style="background: white; width: 70px; height: 70px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"><img src="https://i.ibb.co.com/dJL0JnHW/20260514-222136.png.png" style="width: 100%; height: 100%; object-fit: contain; padding: 5px;"/></div><p style="font-weight: 700; font-size: 18px; margin-bottom: 5px;">OJOL AI PREMIUM v2.0</p><p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">Asisten Digital Cerdas</p><hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 15px 0;"><p style="font-size: 13px; color: #1e293b; margin-bottom: 5px;">Developed with ❤️ by:</p><p style="font-weight: 700; color: #6366f1; font-size: 16px;"><a href="https://www.fa-digitalstudio.web.id/" target="_blank" style="color: #6366f1; text-decoration: none;">Farid Aris</a></p><p style="font-size: 12px; color: #94a3b8; margin-top: 15px;">© 2026 FA DIGITAL STUDIO</p></div>`,
+                html: `<div style="text-align: center;"><div style="background: white; width: 70px; height: 70px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"><img src="https://i.ibb.co.com/cSR6TWgd/20260514-222136.png" style="width: 100%; height: 100%; object-fit: contain; padding: 5px;"/></div><p style="font-weight: 700; font-size: 18px; margin-bottom: 5px;">OJOL AI PREMIUM v2.0</p><p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">Asisten Digital Cerdas</p><hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 15px 0;"><p style="font-size: 13px; color: #1e293b; margin-bottom: 5px;">Developed with ❤️ by:</p><p style="font-weight: 700; color: #6366f1; font-size: 16px;"><a href="https://www.fa-digitalstudio.web.id/" target="_blank" style="color: #6366f1; text-decoration: none;">Farid Aris</a></p><p style="font-size: 12px; color: #94a3b8; margin-top: 15px;">© 2026 FA DIGITAL STUDIO</p></div>`,
                 confirmButtonText: 'Tutup', confirmButtonColor: '#1e293b'
             });
         }
@@ -1023,7 +1094,7 @@
         function copyToClipboard(text, btn) {
             navigator.clipboard.writeText(text).then(() => {
                 const originalInhalt = btn.innerHTML;
-                btn.innerHTML = '<i data-lucide="check" size="14"></i> Copied!';
+                btn.innerHTML = '<i data-lucide="check" size="14"></i> Tersalin!';
                 btn.style.background = "#10b981"; btn.style.color = "white";
                 if (window.lucide) lucide.createIcons();
                 setTimeout(() => { btn.innerHTML = originalInhalt; btn.style.background = "rgba(99,102,241,0.1)"; btn.style.color = "#6366f1"; if (window.lucide) lucide.createIcons(); }, 2000);
@@ -1059,7 +1130,7 @@
             
             if (sender === 'ai' && content) {
                 const copyAllBtn = document.createElement('button');
-                copyAllBtn.innerHTML = '<i data-lucide="copy" size="14"></i> Copy';
+                copyAllBtn.innerHTML = '<i data-lucide="copy" size="14"></i> Salin';
                 copyAllBtn.style = "position: absolute; top: 8px; right: 12px; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); color: #6366f1; font-size: 11px; padding: 4px 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 600; z-index: 10;";
                 copyAllBtn.onclick = function() { copyToClipboard(content, copyAllBtn); };
                 msgDiv.appendChild(copyAllBtn);
@@ -1106,18 +1177,102 @@
             chatBox.scrollTop = chatBox.scrollHeight; if (window.lucide) lucide.createIcons();
         }
 
-        function setupCodeButtons(container) { container.querySelectorAll('pre').forEach(pre => { const btn = document.createElement('button'); btn.className = 'copy-btn'; btn.innerHTML = 'Copy'; btn.onclick = () => { const code = pre.innerText.replace('Copy', ''); navigator.clipboard.writeText(code); btn.innerHTML = 'Copied!'; setTimeout(() => btn.innerHTML = 'Copy', 2000); }; pre.appendChild(btn); }); }
+        function setupCodeButtons(container) { container.querySelectorAll('pre').forEach(pre => { const btn = document.createElement('button'); btn.className = 'copy-btn'; btn.innerHTML = 'Salin'; btn.onclick = () => { const code = pre.innerText.replace('Salin', ''); navigator.clipboard.writeText(code); btn.innerHTML = 'Tersalin!'; setTimeout(() => btn.innerHTML = 'Salin', 2000); }; pre.appendChild(btn); }); }
         function showTyping() { const id = 't-' + Date.now(); const b = document.getElementById('chat-box'); const r = document.createElement('div'); r.id = id; r.className = "msg-row ai-row"; r.innerHTML = '<div class="message ai-message"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>'; b.appendChild(r); b.scrollTop = b.scrollHeight; return id; }
         function removeTyping(id) { const el = document.getElementById(id); if(el) el.remove(); }
         function autoResize(el) { el.style.height = 'auto'; el.style.height = (el.scrollHeight) + 'px'; }
         function toggleView(id) { const input = document.getElementById(id); input.type = (input.type === "password") ? "text" : "password"; if (window.lucide) lucide.createIcons(); }
         
+        // ---------------- FUNGSI LOGIN EMAIL/PASSWORD ----------------
+        function showLogin() {
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('forgot-form').style.display = 'none';
+        }
+        function showRegister() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+            document.getElementById('forgot-form').style.display = 'none';
+        }
+        function showForgot() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('forgot-form').style.display = 'block';
+        }
+
+        async function registerEmail() {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+            if (!name || !email || !password) return Swal.fire('Lengkapi Data', 'Semua kolom harus diisi', 'warning');
+            if (password.length < 6) return Swal.fire('Kata Sandi Terlalu Pendek', 'Minimal 6 karakter', 'warning');
+            
+            Swal.fire({ title: 'Memproses...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await userCredential.user.updateProfile({ displayName: name });
+                Swal.fire('Berhasil!', 'Akun berhasil dibuat', 'success');
+            } catch (error) {
+                let pesan = 'Terjadi kesalahan';
+                if (error.code === 'auth/email-already-in-use') pesan = 'Email sudah terdaftar';
+                if (error.code === 'auth/invalid-email') pesan = 'Format email tidak valid';
+                if (error.code === 'auth/operation-not-allowed') pesan = 'Pendaftaran dinonaktifkan';
+                if (error.code === 'auth/weak-password') pesan = 'Kata sandi terlalu lemah';
+                Swal.fire('Gagal', pesan, 'error');
+            }
+        }
+
+        async function loginEmail() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            if (!email || !password) return Swal.fire('Lengkapi Data', 'Email dan kata sandi harus diisi', 'warning');
+            
+            Swal.fire({ title: 'Memproses...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                Swal.close();
+            } catch (error) {
+                let pesan = 'Terjadi kesalahan';
+                if (error.code === 'auth/invalid-email') pesan = 'Format email tidak valid';
+                if (error.code === 'auth/user-disabled') pesan = 'Akun dinonaktifkan';
+                if (error.code === 'auth/user-not-found') pesan = 'Email belum terdaftar';
+                if (error.code === 'auth/wrong-password') pesan = 'Kata sandi salah';
+                Swal.fire('Gagal Masuk', pesan, 'error');
+            }
+        }
+
+        async function resetPassword() {
+            const email = document.getElementById('forgot-email').value.trim();
+            if (!email) return Swal.fire('Masukkan Email', 'Isi alamat email Anda', 'warning');
+            
+            Swal.fire({ title: 'Mengirim...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                await auth.sendPasswordResetEmail(email);
+                Swal.fire('Berhasil', 'Link reset kata sandi telah dikirim ke email Anda', 'success');
+                showLogin();
+            } catch (error) {
+                let pesan = 'Gagal mengirim link';
+                if (error.code === 'auth/invalid-email') pesan = 'Format email tidak valid';
+                if (error.code === 'auth/user-not-found') pesan = 'Email tidak terdaftar';
+                Swal.fire('Gagal', pesan, 'error');
+            }
+        }
+        // ---------------------------------------------------------------
+
         auth.onAuthStateChanged(u => { 
-            if (u) { document.getElementById('login-overlay').style.display = 'none'; document.getElementById('main-app').style.display = 'flex'; document.getElementById('user-greeting').textContent = u.displayName.split(' ')[0].toUpperCase(); checkPremiumStatus(); if (u.photoURL) document.getElementById('user-avatar-container').innerHTML = `<img src="${u.photoURL}" style="width:100%; height:100%; object-fit:cover;" />`; } 
-            else { document.getElementById('login-overlay').style.display = 'flex'; document.getElementById('main-app').style.display = 'none'; }
+            if (u) { 
+                document.getElementById('login-overlay').style.display = 'none'; 
+                document.getElementById('main-app').style.display = 'flex'; 
+                document.getElementById('user-greeting').textContent = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'Pengguna'; 
+                checkPremiumStatus(); 
+                if (u.photoURL) document.getElementById('user-avatar-container').innerHTML = `<img src="${u.photoURL}" style="width:100%; height:100%; object-fit:cover;" />`; 
+            } 
+            else { 
+                document.getElementById('login-overlay').style.display = 'flex'; 
+                document.getElementById('main-app').style.display = 'none'; 
+            }
         });
 
-        function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         function logout() { 
             if (document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
             Swal.fire({ title: 'Keluar Akun?', text: "Anda harus login kembali untuk menggunakan layanan ini.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#1e293b', cancelButtonColor: '#ef4444', confirmButtonText: 'Ya, Keluar', cancelButtonText: 'Batal' }).then((result) => { if (result.isConfirmed) auth.signOut(); });
@@ -1166,3 +1321,13 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+                
