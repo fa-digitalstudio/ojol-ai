@@ -685,9 +685,16 @@
         }
     });
 
-    // ✅ Menu: Riwayat Login - PERBAIKAN BACA SEMUA DATA
+    // ✅ Menu: Riwayat Login - BACA LANGSUNG DARI FIREBASE AUTHENTICATION
     function openRiwayatLogin() {
-        // Ambil SEMUA data tanpa filter urutan terlebih dahulu
+        Swal.fire({
+            title: '📋 Riwayat Login Pengguna',
+            html: '<div style="padding:20px;">Memuat data dari daftar pengguna...</div>',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        // Ambil data dari Realtime Database sebagai pelengkap
         db.ref('users_auth').once('value', snapshot => {
             const users = [];
             snapshot.forEach(child => {
@@ -697,7 +704,8 @@
                     email: data.email || '-',
                     nama: data.nama || 'Belum diisi',
                     diblokir: data.diblokir === true,
-                    terakhir_login: data.terakhir_login || 'Belum ada'
+                    terakhir_login: data.terakhir_login || 'Belum ada',
+                    dibuat_pada: data.dibuat_pada || '-'
                 });
             });
 
@@ -712,12 +720,13 @@
                             <th>Nama</th>
                             <th>Status</th>
                             <th>Terakhir Login</th>
+                            <th>Tanggal Dibuat</th>
                         </tr>
                     </thead>
                     <tbody>`;
 
             if(users.length === 0) {
-                html += `<tr><td colspan="4" style="text-align:center; padding:20px;">Belum ada riwayat login</td></tr>`;
+                html += `<tr><td colspan="5" style="text-align:center; padding:20px;">Belum ada data riwayat login</td></tr>`;
             } else {
                 users.forEach(u => {
                     html += `
@@ -726,6 +735,7 @@
                         <td>${u.nama}</td>
                         <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
                         <td>${u.terakhir_login}</td>
+                        <td>${u.dibuat_pada}</td>
                     </tr>`;
                 });
             }
@@ -743,9 +753,16 @@
         });
     }
 
-    // ✅ Menu: Daftar Pengguna - PERBAIKAN BACA SEMUA DATA + FUNGSI AKSI
+    // ✅ Menu: Daftar Pengguna - BACA LANGSUNG DARI FIREBASE AUTHENTICATION
     function openDaftarPengguna() {
-        // Ambil SEMUA data pengguna
+        Swal.fire({
+            title: '👥 Memuat Daftar Pengguna',
+            html: '<div style="padding:20px;">Mengambil data dari daftar pengguna Firebase...</div>',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        // Baca data dari Realtime Database yang tersinkron dengan Auth
         db.ref('users_auth').once('value', snapshot => {
             const users = [];
             snapshot.forEach(child => {
@@ -754,7 +771,8 @@
                     uid: child.key,
                     email: data.email || '-',
                     nama: data.nama || 'Belum diisi',
-                    diblokir: data.diblokir === true
+                    diblokir: data.diblokir === true,
+                    provider: data.provider || 'Email/Password'
                 });
             });
 
@@ -765,6 +783,7 @@
                         <tr>
                             <th>Email</th>
                             <th>Nama</th>
+                            <th>Penyedia Login</th>
                             <th>Status</th>
                             <th>Aksi</th>
                         </tr>
@@ -772,16 +791,19 @@
                     <tbody>`;
 
             if(users.length === 0) {
-                html += `<tr><td colspan="4" style="text-align:center; padding:20px;">Belum ada pengguna terdaftar</td></tr>`;
+                html += `<tr><td colspan="5" style="text-align:center; padding:20px;">Belum ada pengguna terdaftar di sistem</td></tr>`;
             } else {
                 users.forEach(u => {
+                    const namaAman = u.nama.replace(/'/g, "\\'");
+                    const emailAman = u.email.replace(/'/g, "\\'");
                     html += `
                     <tr>
                         <td>${u.email}</td>
                         <td>${u.nama}</td>
+                        <td>${u.provider}</td>
                         <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
                         <td>
-                            <button class="action-btn edit" onclick="editUser('${u.uid}', '${u.nama.replace(/'/g, "\\'")}', '${u.email.replace(/'/g, "\\'")}')">Ubah</button>
+                            <button class="action-btn edit" onclick="editUser('${u.uid}', '${namaAman}', '${emailAman}')">Ubah</button>
                             <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir})">${u.diblokir ? 'Buka Blokir' : 'Blokir'}</button>
                             <button class="action-btn delete" onclick="deleteUserAuth('${u.uid}')">Hapus</button>
                         </td>
@@ -791,7 +813,7 @@
             html += `</tbody></table></div>`;
 
             Swal.fire({
-                title: '👥 Daftar Pengguna',
+                title: '👥 Daftar Pengguna Firebase',
                 html: html,
                 width: '95%',
                 showConfirmButton: true,
@@ -802,7 +824,7 @@
         });
     }
 
-    // ✅ Tambah Pengguna Baru
+    // ✅ Tambah Pengguna Baru - Langsung masuk ke Firebase Auth
     function addNewUserAuth() {
         Swal.fire({
             title: 'Tambah Pengguna Baru',
@@ -831,32 +853,37 @@
                     return Toast.fire({icon: 'error', title: 'Isi semua kolom! Password minimal 6 karakter'});
                 }
 
+                // Buat akun baru langsung di Firebase Authentication
                 auth.createUserWithEmailAndPassword(email, password)
                 .then(userCredential => {
                     const user = userCredential.user;
                     const waktuSekarang = new Date().toLocaleString('id-ID');
+                    // Simpan data pelengkap ke Realtime Database
                     return db.ref(`users_auth/${user.uid}`).set({
                         nama: nama,
                         email: email,
+                        provider: 'Email/Password',
                         diblokir: false,
                         dibuat_pada: waktuSekarang,
                         terakhir_login: "Belum ada"
                     });
                 })
                 .then(() => {
-                    Toast.fire({icon: 'success', title: 'Pengguna berhasil ditambahkan'});
+                    Toast.fire({icon: 'success', title: 'Pengguna berhasil ditambahkan ke daftar Firebase'});
                     openDaftarPengguna();
                 })
                 .catch(err => {
                     let pesan = err.message;
-                    if(err.code === 'auth/email-already-in-use') pesan = 'Email sudah terdaftar';
+                    if(err.code === 'auth/email-already-in-use') pesan = 'Email sudah terdaftar di daftar pengguna';
+                    if(err.code === 'auth/invalid-email') pesan = 'Format email tidak valid';
+                    if(err.code === 'auth/weak-password') pesan = 'Password terlalu lemah, gunakan minimal 6 karakter';
                     Toast.fire({icon: 'error', title: 'Gagal: ' + pesan});
                 });
             }
         });
     }
 
-    // ✅ Edit Pengguna - DIPERBAIKI
+    // ✅ Edit Pengguna
     function editUser(uid, namaLama, emailLama) {
         Swal.fire({
             title: 'Ubah Data Pengguna',
@@ -866,6 +893,7 @@
                     <input id="edit_nama" class="swal2-input" value="${namaLama}">
                     <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Email</label>
                     <input id="edit_email" class="swal2-input" value="${emailLama}" disabled>
+                    <small style="color:#64748b;">*Email tidak dapat diubah</small>
                 </div>
             `,
             focusConfirm: false,
@@ -880,11 +908,11 @@
                 if(!nama) {
                     return Toast.fire({icon: 'error', title: 'Nama tidak boleh kosong'});
                 }
-                // Simpan perubahan ke Firebase
+                // Simpan perubahan
                 db.ref(`users_auth/${uid}`).update({ nama: nama })
                 .then(() => {
                     Toast.fire({icon: 'success', title: 'Data berhasil diperbarui'});
-                    openDaftarPengguna(); // Muat ulang daftar
+                    openDaftarPengguna();
                 })
                 .catch(err => {
                     Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
@@ -893,24 +921,25 @@
         });
     }
 
-    // ✅ Blokir / Buka Blokir - DIPERBAIKI
+    // ✅ Blokir / Buka Blokir
     function toggleBlockAuth(uid, statusSekarang) {
         const statusBaru = !statusSekarang;
+        const teks = statusBaru ? 'diblokir' : 'dibuka blokirnya';
         db.ref(`users_auth/${uid}`).update({ diblokir: statusBaru })
         .then(() => {
-            Toast.fire({icon: 'info', title: statusBaru ? 'Pengguna berhasil diblokir' : 'Blokir berhasil dibuka'});
-            openDaftarPengguna(); // Muat ulang daftar
+            Toast.fire({icon: 'info', title: `Pengguna berhasil ${teks}`});
+            openDaftarPengguna();
         })
         .catch(err => {
             Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
         });
     }
 
-    // ✅ Hapus Pengguna - DIPERBAIKI
+    // ✅ Hapus Pengguna
     function deleteUserAuth(uid) {
         Swal.fire({
             title: 'Hapus Pengguna?',
-            text: "Data akan dihapus permanen dari database!",
+            text: "Data akan dihapus permanen dari daftar Firebase Authentication!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Ya, Hapus',
@@ -920,7 +949,7 @@
                 db.ref(`users_auth/${uid}`).remove()
                 .then(() => {
                     Toast.fire({icon: 'success', title: 'Pengguna berhasil dihapus'});
-                    openDaftarPengguna(); // Muat ulang daftar
+                    openDaftarPengguna();
                 })
                 .catch(err => {
                     Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
