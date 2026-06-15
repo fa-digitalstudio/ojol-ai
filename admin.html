@@ -565,6 +565,12 @@
                         terakhir_login: waktuSekarang
                     });
                 } else {
+                    // Cek apakah pengguna diblokir
+                    if (snapshot.val().diblokir === true) {
+                        auth.signOut();
+                        Swal.fire({icon: 'error', title: 'Akses Ditolak', text: 'Akun Anda telah diblokir!'});
+                        return;
+                    }
                     userRef.update({ terakhir_login: waktuSekarang });
                 }
             });
@@ -611,7 +617,7 @@
             const res = await fetch(url, { headers });
             res.ok
                 ? Swal.fire({ icon: 'success', title: 'Valid', text: 'API Key dapat digunakan' })
-                : Swal.fire({ icon: 'error', title: 'Tidak Valid', text: 'Key salah atau habis kuota' });
+                : Swal.fire({ icon: 'error', title: 'Tidak Valid', text: 'Key salah atau kuota habis' });
         } catch {
             Swal.fire('Error', 'Tidak dapat terhubung ke server', 'error');
         }
@@ -703,7 +709,7 @@
                     <td>
                         <button class="action-btn edit" onclick="editUser('${u.uid}', '${namaAman}', '${emailAman}')">Ubah</button>
                         <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir})">${u.diblokir ? 'Buka' : 'Blokir'}</button>
-                        <button class="action-btn delete" onclick="deleteUserAuth('${u.uid}')">Hapus</button>
+                        <button class="action-btn delete" onclick="deleteUserAuth('${u.uid}', '${u.email}')">Hapus</button>
                     </td>
                 </tr>`;
             });
@@ -760,21 +766,38 @@
         });
     }
 
-    // ✅ Blokir/Buka Blokir
+    // ✅ Blokir/Buka Blokir (Fungsi DIPERBAIKI)
     function toggleBlockAuth(uid, statusSekarang) {
         const statusBaru = !statusSekarang;
         db.ref(`users_auth/${uid}`).update({ diblokir: statusBaru })
-        .then(() => { Toast.fire({icon:'info', title: statusBaru ? 'Pengguna diblokir' : 'Blokir dibuka'}); openDaftarPengguna(); })
+        .then(() => {
+            Toast.fire({
+                icon: statusBaru ? 'warning' : 'success', 
+                title: statusBaru ? '✅ Pengguna DIBLOKIR' : '✅ Blokir DIBUKA'
+            });
+            openDaftarPengguna();
+        })
         .catch(err => Toast.fire({icon:'error', title:'Gagal: ' + err.message}));
     }
 
-    // ✅ Hapus Pengguna
-    function deleteUserAuth(uid) {
-        Swal.fire({ title: 'Hapus?', text: 'Data akan hilang permanen', icon: 'warning', showCancelButton: true })
-        .then(res => {
+    // ✅ Hapus Pengguna (Fungsi DIPERBAIKI)
+    function deleteUserAuth(uid, email) {
+        Swal.fire({ 
+            title: 'Hapus Pengguna?', 
+            text: `Akun ${email} akan dihapus PERMANEN dari sistem!`, 
+            icon: 'warning', 
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal'
+        }).then(res => {
             if(!res.isConfirmed) return;
+            
+            // Hapus dari database dulu
             db.ref(`users_auth/${uid}`).remove()
-            .then(() => { Toast.fire({icon:'success', title:'Pengguna dihapus'}); openDaftarPengguna(); })
+            .then(() => {
+                Toast.fire({icon:'success', title:'✅ Data pengguna dihapus dari database'});
+                openDaftarPengguna();
+            })
             .catch(err => Toast.fire({icon:'error', title:'Gagal: ' + err.message}));
         });
     }
