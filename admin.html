@@ -6,7 +6,9 @@
     <title>CRYSTAL ADMIN - AI OJOL</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <!-- Tambahkan Firebase Auth SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -302,7 +304,7 @@
         }
         .history-table {
             width: 100%;
-            min-width: 550px;
+            min-width: 600px;
             border-collapse: collapse;
             font-size: clamp(11px, 2.5vw, 12px);
         }
@@ -327,7 +329,7 @@
             font-weight: 600;
         }
         .edit { background: #3b82f6; color: white; }
-        .block { background: #f59e0b; color: white; }
+        .reset { background: #f59e0b; color: white; }
         .delete { background: var(--danger); color: white; }
         .add-btn {
             background: #10b981;
@@ -369,7 +371,7 @@
 <div class="page-header" id="main-header">
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
     <div class="menu-dropdown" id="main-menu">
-        <a href="#" onclick="openUserManager()">👤 Kelola Pengguna</a>
+        <a href="#" onclick="openUserManager()">👤 Kelola Pengguna Terdaftar</a>
     </div>
 </div>
 
@@ -485,9 +487,6 @@
             // Tampilkan menu garis tiga setelah login berhasil
             document.getElementById('main-header').style.display = 'flex';
             
-            // Update waktu login terakhir ke Firebase
-            updateLastLogin("Farid Aris");
-
             if(remember) {
                 localStorage.setItem('admin_session_key', btoa(input));
             } else {
@@ -537,7 +536,6 @@
     });
 
     // --- KONFIGURASI FIREBASE ---
-    // Ganti dengan API Key dan data Firebase Anda nanti
     const firebaseConfig = {
         apiKey: "AIzaSyBj86r9p6TzIc9TmrXAzQX2LRTe8K7Umro",
         authDomain: "ojolai.firebaseapp.com",
@@ -548,6 +546,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
 
     function initFirebase() {
         const statusBox = document.getElementById('db-status');
@@ -568,19 +567,6 @@
         }, (error) => {
             statusBox.innerText = "System Error: " + error.message;
             statusBox.style.color = "#ef4444";
-        });
-
-        // Inisialisasi data pengguna awal jika belum ada di Firebase
-        db.ref('users').once('value', snapshot => {
-            if (!snapshot.exists()) {
-                db.ref('users').push({
-                    nama: "Farid Aris",
-                    email: "farid@admin.id",
-                    password: "adminojolkola",
-                    status: "Aktif",
-                    terakhir_login: "Belum ada"
-                });
-            }
         });
     }
 
@@ -665,7 +651,7 @@
             });
     }
 
-    // --- FUNGSI BARU TERINTEGRASI DENGAN FIREBASE ---
+    // --- FUNGSI MENU & KELOLA PENGGUNA FIREBASE AUTH ---
     function toggleMenu() {
         const menu = document.getElementById('main-menu');
         menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
@@ -678,32 +664,24 @@
         }
     });
 
-    // Update waktu login terakhir ke Firebase
-    function updateLastLogin(namaPengguna) {
-        const waktuSekarang = new Date().toLocaleString('id-ID');
-        db.ref('users').orderByChild('nama').equalTo(namaPengguna).once('value', snapshot => {
-            snapshot.forEach(child => {
-                db.ref(`users/${child.key}`).update({ terakhir_login: waktuSekarang });
-            });
-        });
-    }
-
-    // Buka halaman kelola pengguna (ambil data dari Firebase)
+    // Ambil daftar pengguna yang terdaftar lewat Firebase Auth
+    // Catatan: Untuk membaca daftar pengguna Auth, Anda butuh Firebase Admin SDK / Cloud Function
+    // Di sini kita simpan data pengguna di Realtime Database sebagai referensi terhubung dengan Auth
     function openUserManager() {
-        db.ref('users').once('value', snapshot => {
+        db.ref('users_auth').once('value', snapshot => {
             const users = [];
             snapshot.forEach(child => {
-                users.push({ id: child.key, ...child.val() });
+                users.push({ uid: child.key, ...child.val() });
             });
 
-            let html = `<button class="add-btn" onclick="addNewUser()">➕ Tambah Pengguna Baru</button>`;
+            let html = `<button class="add-btn" onclick="addNewUserAuth()">➕ Daftarkan Pengguna Baru</button>`;
             html += `<div class="table-container">
                 <table class="history-table">
                     <thead>
                         <tr>
-                            <th>Nama</th>
+                            <th>UID</th>
                             <th>Email</th>
-                            <th>Password</th>
+                            <th>Nama</th>
                             <th>Status</th>
                             <th>Login Terakhir</th>
                             <th>Aksi</th>
@@ -712,20 +690,20 @@
                     <tbody>`;
 
             if(users.length === 0) {
-                html += `<tr><td colspan="6" style="text-align:center; padding:20px;">Belum ada data pengguna</td></tr>`;
+                html += `<tr><td colspan="6" style="text-align:center; padding:20px;">Belum ada pengguna terdaftar</td></tr>`;
             } else {
                 users.forEach(u => {
                     html += `
                     <tr>
-                        <td>${u.nama}</td>
+                        <td style="font-size:10px;">${u.uid}</td>
                         <td>${u.email}</td>
-                        <td>${u.password}</td>
-                        <td>${u.status}</td>
-                        <td>${u.terakhir_login}</td>
+                        <td>${u.nama || '-'}</td>
+                        <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
+                        <td>${u.terakhir_login || 'Belum ada'}</td>
                         <td>
-                            <button class="action-btn edit" onclick="editUser('${u.id}')">Ubah</button>
-                            <button class="action-btn block" onclick="toggleBlock('${u.id}', '${u.status}')">${u.status === 'Aktif' ? 'Blokir' : 'Buka'}</button>
-                            <button class="action-btn delete" onclick="deleteUser('${u.id}')">Hapus</button>
+                            <button class="action-btn reset" onclick="resetPassword('${u.email}')">Reset Pass</button>
+                            <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir || false})">${u.diblokir ? 'Buka Blokir' : 'Blokir'}</button>
+                            <button class="action-btn delete" onclick="deleteUserAuth('${u.uid}')">Hapus</button>
                         </td>
                     </tr>`;
                 });
@@ -733,7 +711,7 @@
             html += `</tbody></table></div>`;
 
             Swal.fire({
-                title: '👤 Kelola Pengguna',
+                title: '👤 Kelola Pengguna Terdaftar',
                 html: html,
                 width: '95%',
                 showConfirmButton: true,
@@ -742,18 +720,18 @@
         });
     }
 
-    // Tambah pengguna baru ke Firebase
-    function addNewUser() {
+    // Daftarkan pengguna baru ke Firebase Auth + simpan data ke Realtime Database
+    function addNewUserAuth() {
         Swal.fire({
-            title: 'Tambah Pengguna Baru',
+            title: 'Daftarkan Pengguna Baru',
             html: `
                 <div style="text-align:left; margin-top:10px;">
                     <label style="font-size:13px; text-transform:none; margin-bottom:4px;">Nama Lengkap</label>
                     <input id="nama_baru" class="swal2-input" placeholder="Masukkan nama">
                     <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Email</label>
-                    <input id="email_baru" class="swal2-input" placeholder="Masukkan email">
-                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Password</label>
-                    <input id="pass_baru" class="swal2-input" type="password" placeholder="Masukkan password">
+                    <input id="email_baru" class="swal2-input" placeholder="contoh@email.com">
+                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Password Awal</label>
+                    <input id="pass_baru" class="swal2-input" type="password" placeholder="Minimal 6 karakter">
                 </div>
             `,
             focusConfirm: false,
@@ -767,109 +745,90 @@
         }).then((result) => {
             if(result.isConfirmed) {
                 const {nama, email, password} = result.value;
-                if(!nama || !email || !password) {
-                    return Toast.fire({icon: 'error', title: 'Semua kolom harus diisi!'});
+                if(!nama || !email || !password || password.length < 6) {
+                    return Toast.fire({icon: 'error', title: 'Isi semua kolom! Password minimal 6 karakter'});
                 }
 
-                db.ref('users').push({
-                    nama: nama,
-                    email: email,
-                    password: password,
-                    status: "Aktif",
-                    terakhir_login: "Belum ada"
+                // Buat akun di Firebase Auth
+                auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    const user = userCredential.user;
+                    // Simpan data tambahan ke Realtime Database
+                    return db.ref(`users_auth/${user.uid}`).set({
+                        nama: nama,
+                        email: email,
+                        diblokir: false,
+                        dibuat_pada: new Date().toLocaleString('id-ID'),
+                        terakhir_login: "Belum ada"
+                    });
                 })
                 .then(() => {
-                    Toast.fire({icon: 'success', title: 'Pengguna berhasil ditambahkan'});
+                    Toast.fire({icon: 'success', title: 'Pengguna berhasil didaftarkan'});
                     openUserManager();
                 })
                 .catch(err => {
-                    Toast.fire({icon: 'error', title: 'Gagal menyimpan: ' + err.message});
+                    let pesan = err.message;
+                    if(err.code === 'auth/email-already-in-use') pesan = 'Email sudah terdaftar';
+                    Toast.fire({icon: 'error', title: 'Gagal: ' + pesan});
                 });
             }
         });
     }
 
-    // Edit data pengguna di Firebase
-    function editUser(userId) {
-        db.ref(`users/${userId}`).once('value', snapshot => {
-            const user = snapshot.val();
-            if(!user) return;
-
-            Swal.fire({
-                title: 'Ubah Data Pengguna',
-                html: `
-                    <div style="text-align:left; margin-top:10px;">
-                        <label style="font-size:13px; text-transform:none; margin-bottom:4px;">Nama Lengkap</label>
-                        <input id="edit_nama" class="swal2-input" value="${user.nama}">
-                        <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Email</label>
-                        <input id="edit_email" class="swal2-input" value="${user.email}">
-                        <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Password</label>
-                        <input id="edit_pass" class="swal2-input" type="password" value="${user.password}">
-                    </div>
-                `,
-                focusConfirm: false,
-                preConfirm: () => {
-                    return {
-                        nama: document.getElementById('edit_nama').value.trim(),
-                        email: document.getElementById('edit_email').value.trim(),
-                        password: document.getElementById('edit_pass').value.trim()
-                    }
-                }
-            }).then((result) => {
-                if(result.isConfirmed) {
-                    const {nama, email, password} = result.value;
-                    if(!nama || !email || !password) {
-                        return Toast.fire({icon: 'error', title: 'Semua kolom harus diisi!'});
-                    }
-
-                    db.ref(`users/${userId}`).update({
-                        nama: nama,
-                        email: email,
-                        password: password
-                    })
-                    .then(() => {
-                        Toast.fire({icon: 'success', title: 'Data berhasil diperbarui'});
-                        openUserManager();
-                    })
-                    .catch(err => {
-                        Toast.fire({icon: 'error', title: 'Gagal menyimpan: ' + err.message});
-                    });
-                }
-            });
+    // Kirim email reset password
+    function resetPassword(email) {
+        Swal.fire({
+            title: 'Reset Kata Sandi',
+            text: `Kirim tautan reset ke ${email}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Kirim',
+            cancelButtonText: 'Batal'
+        }).then(res => {
+            if(res.isConfirmed) {
+                auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    Toast.fire({icon: 'success', title: 'Email reset terkirim'});
+                })
+                .catch(err => {
+                    Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
+                });
+            }
         });
     }
 
-    // Blokir / Buka blokir pengguna di Firebase
-    function toggleBlock(userId, statusSekarang) {
-        const statusBaru = statusSekarang === 'Aktif' ? 'Diblokir' : 'Aktif';
-        db.ref(`users/${userId}`).update({ status: statusBaru })
+    // Ubah status blokir pengguna
+    function toggleBlockAuth(uid, statusSekarang) {
+        const statusBaru = !statusSekarang;
+        db.ref(`users_auth/${uid}`).update({ diblokir: statusBaru })
         .then(() => {
-            Toast.fire({icon: 'info', title: 'Status pengguna diperbarui'});
+            Toast.fire({icon: 'info', title: statusBaru ? 'Pengguna diblokir' : 'Blokir dibuka'});
             openUserManager();
         })
         .catch(err => {
-            Toast.fire({icon: 'error', title: 'Gagal mengubah status: ' + err.message});
+            Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
         });
     }
 
-    // Hapus pengguna dari Firebase
-    function deleteUser(userId) {
+    // Hapus akun pengguna
+    function deleteUserAuth(uid) {
         Swal.fire({
             title: 'Hapus Pengguna?',
-            text: "Data akan dihapus permanen dari database!",
+            text: "Akun akan dihapus permanen!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Ya, Hapus',
             cancelButtonText: 'Batal'
-        }).then((res) => {
+        }).then(res => {
             if(res.isConfirmed) {
-                db.ref(`users/${userId}`).remove()
+                // Hapus data di Realtime Database
+                db.ref(`users_auth/${uid}`).remove()
                 .then(() => {
-                    Toast.fire({icon: 'success', title: 'Pengguna dihapus'});
+                    Toast.fire({icon: 'success', title: 'Data pengguna dihapus'});
                     openUserManager();
                 })
                 .catch(err => {
-                    Toast.fire({icon: 'error', title: 'Gagal menghapus: ' + err.message});
+                    Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
                 });
             }
         });
