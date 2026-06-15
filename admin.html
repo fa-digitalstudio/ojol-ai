@@ -317,6 +317,17 @@
             font-weight: 700;
             white-space: nowrap;
         }
+        .action-btn {
+            padding: 5px 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: clamp(10px, 2.2vw, 11px);
+            cursor: pointer;
+            margin: 2px;
+            font-weight: 600;
+            background: #8b5cf6;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -325,7 +336,6 @@
 <div class="page-header" id="main-header">
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
     <div class="menu-dropdown" id="main-menu">
-        <!-- ✅ Hapus menu Daftar Pengguna, hanya Riwayat Login yang tersisa -->
         <a href="#" onclick="openRiwayatLogin()">📋 Riwayat Login</a>
     </div>
 </div>
@@ -519,10 +529,9 @@
                         diblokir: false,
                         dibuat_pada: waktuSekarang,
                         terakhir_login: waktuSekarang,
-                        password: '-' // placeholder, akan diisi saat buat akun baru
+                        password: '-'
                     });
                 } else {
-                    // Cek apakah pengguna diblokir
                     if (snapshot.val().diblokir === true) {
                         auth.signOut();
                         Swal.fire({icon: 'error', title: 'Akses Ditolak', text: 'Akun Anda telah diblokir!'});
@@ -610,7 +619,7 @@
         if(!e.target.matches('.menu-toggle')) document.getElementById('main-menu').style.display = 'none';
     });
 
-    // ✅ Riwayat Login - DITAMBAH kolom Password
+    // ✅ Riwayat Login + tombol tambah password
     function openRiwayatLogin() {
         db.ref('users_auth').once('value')
         .then(snap => {
@@ -618,6 +627,7 @@
             snap.forEach(child => {
                 const d = child.val() || {};
                 users.push({
+                    uid: child.key,
                     email: d.email || '-',
                     nama: d.nama || 'Belum diisi',
                     password: d.password || '-',
@@ -628,13 +638,42 @@
             users.sort((a,b) => new Date(b.terakhir_login) - new Date(a.terakhir_login));
 
             let html = `<div class="table-container"><table class="history-table">
-                <thead><tr><th>Email</th><th>Nama</th><th>Password</th><th>Status</th><th>Terakhir Login</th></tr></thead><tbody>`;
-            if(users.length === 0) html += `<tr><td colspan="5" style="text-align:center; padding:20px;">Belum ada data</td></tr>`;
-            else users.forEach(u => html += `<tr><td>${u.email}</td><td>${u.nama}</td><td>${u.password}</td><td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td><td>${u.terakhir_login}</td></tr>`);
+                <thead><tr><th>Email</th><th>Nama</th><th>Password</th><th>Status</th><th>Terakhir Login</th><th>Aksi</th></tr></thead><tbody>`;
+            if(users.length === 0) html += `<tr><td colspan="6" style="text-align:center; padding:20px;">Belum ada data</td></tr>`;
+            else users.forEach(u => {
+                html += `<tr>
+                    <td>${u.email}</td>
+                    <td>${u.nama}</td>
+                    <td>${u.password}</td>
+                    <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
+                    <td>${u.terakhir_login}</td>
+                    <td><button class="action-btn" onclick="setPassword('${u.uid}')">Isi Password</button></td>
+                </tr>`;
+            });
             html += `</tbody></table></div>`;
             Swal.fire({ title: '📋 Riwayat Login', html, width: '95%', confirmButtonText: 'Tutup' });
         })
         .catch(err => Swal.fire('Error', 'Gagal baca data: ' + err.message, 'error'));
+    }
+
+    // ✅ Fungsi untuk mengisi password
+    function setPassword(uid) {
+        Swal.fire({
+            title: 'Masukkan Password',
+            input: 'text',
+            inputPlaceholder: 'Tulis password akun ini',
+            showCancelButton: true,
+            confirmButtonText: 'Simpan',
+            cancelButtonText: 'Batal'
+        }).then(res => {
+            if (!res.isConfirmed || !res.value) return;
+            db.ref(`users_auth/${uid}`).update({ password: res.value })
+            .then(() => {
+                Toast.fire({ icon: 'success', title: 'Password tersimpan' });
+                openRiwayatLogin();
+            })
+            .catch(err => Toast.fire({ icon: 'error', title: 'Gagal: ' + err.message }));
+        });
     }
 
 </script>
