@@ -503,8 +503,7 @@
                 icon: 'error', 
                 title: 'Akses Ditolak', 
                 text: 'Kata sandi tidak valid. Silahkan coba lagi.',
-                confirmButtonText: 'Coba Lagi',
-                showClass: { popup: 'animate__animated animate__shakeX' }
+                confirmButtonText: 'Coba Lagi'
             });
         }
     }
@@ -550,6 +549,7 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
+    // Otomatis simpan data pengguna yang login
     auth.onAuthStateChanged((user) => {
         if (user) {
             const waktuSekarang = new Date().toLocaleString('id-ID');
@@ -559,6 +559,7 @@
                     userRef.set({
                         email: user.email,
                         nama: user.displayName || 'Belum diisi',
+                        provider: user.providerData[0]?.providerId || 'email',
                         diblokir: false,
                         dibuat_pada: waktuSekarang,
                         terakhir_login: waktuSekarang
@@ -572,80 +573,59 @@
 
     function initFirebase() {
         const statusBox = document.getElementById('db-status');
-        db.ref('config').on('value', (snap) => {
-            const data = snap.val();
+        db.ref('config').once('value')
+        .then(snap => {
+            const data = snap.val() || {};
             statusBox.innerText = "System Synced & Secured";
             statusBox.classList.add('status-online');
-
-            if(data) {
-                document.getElementById('or_key').value = data.openrouter_key || '';
-                document.getElementById('gr_key').value = data.groq_key || '';
-                document.getElementById('gm_key').value = data.gemini_key || '';
-                document.getElementById('or_status').checked = data.or_active || false;
-                document.getElementById('gr_status').checked = data.gr_active || false;
-                document.getElementById('gm_status').checked = data.gm_active || false;
-                document.getElementById('maint_mode').value = String(data.is_maintenance);
-            }
-        }, (error) => {
+            document.getElementById('or_key').value = data.openrouter_key || '';
+            document.getElementById('gr_key').value = data.groq_key || '';
+            document.getElementById('gm_key').value = data.gemini_key || '';
+            document.getElementById('or_status').checked = !!data.or_active;
+            document.getElementById('gr_status').checked = !!data.gr_active;
+            document.getElementById('gm_status').checked = !!data.gm_active;
+            document.getElementById('maint_mode').value = String(data.is_maintenance || false);
+        })
+        .catch(error => {
             statusBox.innerText = "System Error: " + error.message;
             statusBox.style.color = "#ef4444";
         });
     }
 
     async function testAPI(type) {
-        const key = document.getElementById(type + '_key').value;
+        const key = document.getElementById(type + '_key').value.trim();
         if(!key) return Toast.fire({ icon: 'info', title: 'API Key masih kosong' });
 
-        Swal.fire({ 
-            title: 'Memverifikasi...', 
-            html: 'Menghubungkan ke server provider',
-            allowOutsideClick: false, 
-            didOpen: () => { Swal.showLoading(); } 
-        });
-
+        Swal.fire({ title: 'Memverifikasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         try {
-            let url, headers;
+            let url, headers = {};
             if(type === 'gr') {
                 url = 'https://api.groq.com/openai/v1/models';
-                headers = { 'Authorization': `Bearer ${key}` };
+                headers.Authorization = `Bearer ${key}`;
             } else if(type === 'or') {
                 url = 'https://openrouter.ai/api/v1/models';
-                headers = { 'Authorization': `Bearer ${key}` };
+                headers.Authorization = `Bearer ${key}`;
             } else {
                 url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
             }
-
-            const res = await fetch(url, { headers: headers });
-            if(res.ok) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Validasi Berhasil',
-                    text: 'API Key valid dan siap digunakan!',
-                    confirmButtonText: 'Mantap',
-                    backdrop: `rgba(0,123,255,0.1)`
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Validasi Gagal',
-                    text: 'Key tidak valid atau kuota habis.',
-                    confirmButtonText: 'Periksa Kembali'
-                });
-            }
-        } catch (e) {
-            Swal.fire('Error', 'Gagal terhubung ke server provider API.', 'error');
+            const res = await fetch(url, { headers });
+            res.ok
+                ? Swal.fire({ icon: 'success', title: 'Valid', text: 'API Key dapat digunakan' })
+                : Swal.fire({ icon: 'error', title: 'Tidak Valid', text: 'Key salah atau habis kuota' });
+        } catch {
+            Swal.fire('Error', 'Tidak dapat terhubung ke server', 'error');
         }
     }
 
     function updateConfig() {
         const btn = document.getElementById('update-btn');
-        btn.innerText = "Updating...";
+        btn.innerText = "Menyimpan...";
         btn.disabled = true;
 
         const updatedData = {
-            openrouter_key: document.getElementById('or_key').value,
-            groq_key: document.getElementById('gr_key').value,
-            gemini_key: document.getElementById('gm_key').value,
+            openrouter_key: document.getElementById('or_key').value.trim(),
+            groq_key: document.getElementById('gr_key').value.trim(),
+            gemini_key: document.getElementById('gm_key').value.trim(),
             or_active: document.getElementById('or_status').checked,
             gr_active: document.getElementById('gr_status').checked,
             gm_active: document.getElementById('gm_status').checked,
@@ -653,308 +633,149 @@
         };
 
         db.ref('config').set(updatedData)
-            .then(() => {
-                Swal.fire({ 
-                    icon: 'success', 
-                    title: 'Berhasil Disimpan!', 
-                    text: 'Konfigurasi sistem telah diperbarui secara real-time.', 
-                    timer: 2000, 
-                    showConfirmButton: false,
-                    background: '#ffffff',
-                    iconColor: '#0062ff'
-                });
-            })
-            .catch((err) => {
-                Swal.fire('Error', err.message, 'error');
-            })
-            .finally(() => {
-                btn.innerText = "Save Configuration";
-                btn.disabled = false;
-            });
+            .then(() => Toast.fire({ icon: 'success', title: 'Konfigurasi tersimpan' }))
+            .catch(err => Toast.fire({ icon: 'error', title: 'Gagal: ' + err.message }))
+            .finally(() => { btn.innerText = "Save Configuration"; btn.disabled = false; });
     }
 
-    // --- FUNGSI MENU ---
     function toggleMenu() {
         const menu = document.getElementById('main-menu');
         menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
     }
 
-    document.addEventListener('click', function(e) {
-        if(!e.target.matches('.menu-toggle')) {
-            document.getElementById('main-menu').style.display = 'none';
-        }
+    document.addEventListener('click', e => {
+        if(!e.target.matches('.menu-toggle')) document.getElementById('main-menu').style.display = 'none';
     });
 
-    // ✅ Menu: Riwayat Login - BACA LANGSUNG DARI FIREBASE AUTHENTICATION
+    // ✅ Riwayat Login
     function openRiwayatLogin() {
-        Swal.fire({
-            title: '📋 Riwayat Login Pengguna',
-            html: '<div style="padding:20px;">Memuat data dari daftar pengguna...</div>',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
-        // Ambil data dari Realtime Database sebagai pelengkap
-        db.ref('users_auth').once('value', snapshot => {
+        db.ref('users_auth').once('value')
+        .then(snap => {
             const users = [];
-            snapshot.forEach(child => {
-                const data = child.val() || {};
+            snap.forEach(child => {
+                const d = child.val() || {};
                 users.push({
-                    uid: child.key,
-                    email: data.email || '-',
-                    nama: data.nama || 'Belum diisi',
-                    diblokir: data.diblokir === true,
-                    terakhir_login: data.terakhir_login || 'Belum ada',
-                    dibuat_pada: data.dibuat_pada || '-'
+                    email: d.email || '-',
+                    nama: d.nama || 'Belum diisi',
+                    diblokir: !!d.diblokir,
+                    terakhir_login: d.terakhir_login || '-'
                 });
             });
+            users.sort((a,b) => new Date(b.terakhir_login) - new Date(a.terakhir_login));
 
-            // Urutkan dari yang terakhir login
-            users.sort((a, b) => new Date(b.terakhir_login) - new Date(a.terakhir_login));
-
-            let html = `<div class="table-container">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Nama</th>
-                            <th>Status</th>
-                            <th>Terakhir Login</th>
-                            <th>Tanggal Dibuat</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-
-            if(users.length === 0) {
-                html += `<tr><td colspan="5" style="text-align:center; padding:20px;">Belum ada data riwayat login</td></tr>`;
-            } else {
-                users.forEach(u => {
-                    html += `
-                    <tr>
-                        <td>${u.email}</td>
-                        <td>${u.nama}</td>
-                        <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
-                        <td>${u.terakhir_login}</td>
-                        <td>${u.dibuat_pada}</td>
-                    </tr>`;
-                });
-            }
+            let html = `<div class="table-container"><table class="history-table">
+                <thead><tr><th>Email</th><th>Nama</th><th>Status</th><th>Terakhir Login</th></tr></thead><tbody>`;
+            if(users.length === 0) html += `<tr><td colspan="4" style="text-align:center; padding:20px;">Belum ada data</td></tr>`;
+            else users.forEach(u => html += `<tr><td>${u.email}</td><td>${u.nama}</td><td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td><td>${u.terakhir_login}</td></tr>`);
             html += `</tbody></table></div>`;
-
-            Swal.fire({
-                title: '📋 Riwayat Login Pengguna',
-                html: html,
-                width: '95%',
-                showConfirmButton: true,
-                confirmButtonText: 'Tutup'
-            });
-        }, (err) => {
-            Swal.fire('Error', 'Gagal memuat data: ' + err.message, 'error');
-        });
+            Swal.fire({ title: '📋 Riwayat Login', html, width: '95%', confirmButtonText: 'Tutup' });
+        })
+        .catch(err => Swal.fire('Error', 'Gagal baca data: ' + err.message, 'error'));
     }
 
-    // ✅ Menu: Daftar Pengguna - BACA LANGSUNG DARI FIREBASE AUTHENTICATION
+    // ✅ Daftar Pengguna
     function openDaftarPengguna() {
-        Swal.fire({
-            title: '👥 Memuat Daftar Pengguna',
-            html: '<div style="padding:20px;">Mengambil data dari daftar pengguna Firebase...</div>',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
-        // Baca data dari Realtime Database yang tersinkron dengan Auth
-        db.ref('users_auth').once('value', snapshot => {
+        db.ref('users_auth').once('value')
+        .then(snap => {
             const users = [];
-            snapshot.forEach(child => {
-                const data = child.val() || {};
+            snap.forEach(child => {
+                const d = child.val() || {};
                 users.push({
                     uid: child.key,
-                    email: data.email || '-',
-                    nama: data.nama || 'Belum diisi',
-                    diblokir: data.diblokir === true,
-                    provider: data.provider || 'Email/Password'
+                    email: d.email || '-',
+                    nama: d.nama || 'Belum diisi',
+                    diblokir: !!d.diblokir
                 });
             });
 
-            let html = `<button class="add-btn" onclick="addNewUserAuth()">➕ Tambah Pengguna Baru</button>`;
-            html += `<div class="table-container">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Nama</th>
-                            <th>Penyedia Login</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
+            let html = `<button class="add-btn" onclick="addNewUserAuth()">➕ Tambah Pengguna</button>
+            <div class="table-container"><table class="history-table">
+                <thead><tr><th>Email</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
 
-            if(users.length === 0) {
-                html += `<tr><td colspan="5" style="text-align:center; padding:20px;">Belum ada pengguna terdaftar di sistem</td></tr>`;
-            } else {
-                users.forEach(u => {
-                    const namaAman = u.nama.replace(/'/g, "\\'");
-                    const emailAman = u.email.replace(/'/g, "\\'");
-                    html += `
-                    <tr>
-                        <td>${u.email}</td>
-                        <td>${u.nama}</td>
-                        <td>${u.provider}</td>
-                        <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
-                        <td>
-                            <button class="action-btn edit" onclick="editUser('${u.uid}', '${namaAman}', '${emailAman}')">Ubah</button>
-                            <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir})">${u.diblokir ? 'Buka Blokir' : 'Blokir'}</button>
-                            <button class="action-btn delete" onclick="deleteUserAuth('${u.uid}')">Hapus</button>
-                        </td>
-                    </tr>`;
-                });
-            }
+            if(users.length === 0) html += `<tr><td colspan="4" style="text-align:center; padding:20px;">Belum ada pengguna</td></tr>`;
+            else users.forEach(u => {
+                const namaAman = u.nama.replace(/'/g, "\\'");
+                const emailAman = u.email.replace(/'/g, "\\'");
+                html += `<tr>
+                    <td>${u.email}</td>
+                    <td>${u.nama}</td>
+                    <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
+                    <td>
+                        <button class="action-btn edit" onclick="editUser('${u.uid}', '${namaAman}', '${emailAman}')">Ubah</button>
+                        <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir})">${u.diblokir ? 'Buka' : 'Blokir'}</button>
+                        <button class="action-btn delete" onclick="deleteUserAuth('${u.uid}')">Hapus</button>
+                    </td>
+                </tr>`;
+            });
+
             html += `</tbody></table></div>`;
-
-            Swal.fire({
-                title: '👥 Daftar Pengguna Firebase',
-                html: html,
-                width: '95%',
-                showConfirmButton: true,
-                confirmButtonText: 'Tutup'
-            });
-        }, (err) => {
-            Swal.fire('Error', 'Gagal memuat data: ' + err.message, 'error');
-        });
+            Swal.fire({ title: '👥 Daftar Pengguna', html, width: '95%', confirmButtonText: 'Tutup' });
+        })
+        .catch(err => Swal.fire('Error', 'Gagal baca data: ' + err.message, 'error'));
     }
 
-    // ✅ Tambah Pengguna Baru - Langsung masuk ke Firebase Auth
+    // ✅ Tambah Pengguna
     function addNewUserAuth() {
         Swal.fire({
-            title: 'Tambah Pengguna Baru',
-            html: `
-                <div style="text-align:left; margin-top:10px;">
-                    <label style="font-size:13px; text-transform:none; margin-bottom:4px;">Nama Lengkap</label>
-                    <input id="nama_baru" class="swal2-input" placeholder="Masukkan nama">
-                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Email</label>
-                    <input id="email_baru" class="swal2-input" placeholder="contoh@email.com">
-                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Password Awal</label>
-                    <input id="pass_baru" class="swal2-input" type="password" placeholder="Minimal 6 karakter">
-                </div>
-            `,
+            title: 'Tambah Pengguna',
+            html: `<div style="text-align:left;">
+                <input id="nama_baru" class="swal2-input" placeholder="Nama Lengkap">
+                <input id="email_baru" class="swal2-input" placeholder="Email">
+                <input id="pass_baru" class="swal2-input" type="password" placeholder="Password (min 6 karakter)">
+            </div>`,
             focusConfirm: false,
-            preConfirm: () => {
-                return {
-                    nama: document.getElementById('nama_baru').value.trim(),
-                    email: document.getElementById('email_baru').value.trim(),
-                    password: document.getElementById('pass_baru').value.trim()
-                }
-            }
-        }).then((result) => {
-            if(result.isConfirmed) {
-                const {nama, email, password} = result.value;
-                if(!nama || !email || !password || password.length < 6) {
-                    return Toast.fire({icon: 'error', title: 'Isi semua kolom! Password minimal 6 karakter'});
-                }
+            preConfirm: () => ({
+                nama: document.getElementById('nama_baru').value.trim(),
+                email: document.getElementById('email_baru').value.trim(),
+                password: document.getElementById('pass_baru').value.trim()
+            })
+        }).then(res => {
+            if(!res.isConfirmed) return;
+            const {nama, email, password} = res.value;
+            if(!nama || !email || password.length < 6) return Toast.fire({icon:'error', title:'Isi semua kolom dengan benar'});
 
-                // Buat akun baru langsung di Firebase Authentication
-                auth.createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    const user = userCredential.user;
-                    const waktuSekarang = new Date().toLocaleString('id-ID');
-                    // Simpan data pelengkap ke Realtime Database
-                    return db.ref(`users_auth/${user.uid}`).set({
-                        nama: nama,
-                        email: email,
-                        provider: 'Email/Password',
-                        diblokir: false,
-                        dibuat_pada: waktuSekarang,
-                        terakhir_login: "Belum ada"
-                    });
-                })
-                .then(() => {
-                    Toast.fire({icon: 'success', title: 'Pengguna berhasil ditambahkan ke daftar Firebase'});
-                    openDaftarPengguna();
-                })
-                .catch(err => {
-                    let pesan = err.message;
-                    if(err.code === 'auth/email-already-in-use') pesan = 'Email sudah terdaftar di daftar pengguna';
-                    if(err.code === 'auth/invalid-email') pesan = 'Format email tidak valid';
-                    if(err.code === 'auth/weak-password') pesan = 'Password terlalu lemah, gunakan minimal 6 karakter';
-                    Toast.fire({icon: 'error', title: 'Gagal: ' + pesan});
+            auth.createUserWithEmailAndPassword(email, password)
+            .then(akun => {
+                const waktuSekarang = new Date().toLocaleString('id-ID');
+                return db.ref(`users_auth/${akun.user.uid}`).set({
+                    nama, email, diblokir: false, dibuat_pada: waktuSekarang, terakhir_login: '-'
                 });
-            }
+            })
+            .then(() => { Toast.fire({icon:'success', title:'Pengguna ditambahkan'}); openDaftarPengguna(); })
+            .catch(err => Toast.fire({icon:'error', title:'Gagal: ' + err.message}));
         });
     }
 
     // ✅ Edit Pengguna
     function editUser(uid, namaLama, emailLama) {
         Swal.fire({
-            title: 'Ubah Data Pengguna',
-            html: `
-                <div style="text-align:left; margin-top:10px;">
-                    <label style="font-size:13px; text-transform:none; margin-bottom:4px;">Nama Lengkap</label>
-                    <input id="edit_nama" class="swal2-input" value="${namaLama}">
-                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Email</label>
-                    <input id="edit_email" class="swal2-input" value="${emailLama}" disabled>
-                    <small style="color:#64748b;">*Email tidak dapat diubah</small>
-                </div>
-            `,
-            focusConfirm: false,
-            preConfirm: () => {
-                return {
-                    nama: document.getElementById('edit_nama').value.trim()
-                }
-            }
-        }).then((result) => {
-            if(result.isConfirmed) {
-                const {nama} = result.value;
-                if(!nama) {
-                    return Toast.fire({icon: 'error', title: 'Nama tidak boleh kosong'});
-                }
-                // Simpan perubahan
-                db.ref(`users_auth/${uid}`).update({ nama: nama })
-                .then(() => {
-                    Toast.fire({icon: 'success', title: 'Data berhasil diperbarui'});
-                    openDaftarPengguna();
-                })
-                .catch(err => {
-                    Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
-                });
-            }
+            title: 'Ubah Nama',
+            html: `<input id="edit_nama" class="swal2-input" value="${namaLama}">`,
+            preConfirm: () => document.getElementById('edit_nama').value.trim()
+        }).then(res => {
+            if(!res.isConfirmed || !res.value) return;
+            db.ref(`users_auth/${uid}`).update({ nama: res.value })
+            .then(() => { Toast.fire({icon:'success', title:'Data diperbarui'}); openDaftarPengguna(); })
+            .catch(err => Toast.fire({icon:'error', title:'Gagal: ' + err.message}));
         });
     }
 
-    // ✅ Blokir / Buka Blokir
+    // ✅ Blokir/Buka Blokir
     function toggleBlockAuth(uid, statusSekarang) {
         const statusBaru = !statusSekarang;
-        const teks = statusBaru ? 'diblokir' : 'dibuka blokirnya';
         db.ref(`users_auth/${uid}`).update({ diblokir: statusBaru })
-        .then(() => {
-            Toast.fire({icon: 'info', title: `Pengguna berhasil ${teks}`});
-            openDaftarPengguna();
-        })
-        .catch(err => {
-            Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
-        });
+        .then(() => { Toast.fire({icon:'info', title: statusBaru ? 'Pengguna diblokir' : 'Blokir dibuka'}); openDaftarPengguna(); })
+        .catch(err => Toast.fire({icon:'error', title:'Gagal: ' + err.message}));
     }
 
     // ✅ Hapus Pengguna
     function deleteUserAuth(uid) {
-        Swal.fire({
-            title: 'Hapus Pengguna?',
-            text: "Data akan dihapus permanen dari daftar Firebase Authentication!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Ya, Hapus',
-            cancelButtonText: 'Batal'
-        }).then(res => {
-            if(res.isConfirmed) {
-                db.ref(`users_auth/${uid}`).remove()
-                .then(() => {
-                    Toast.fire({icon: 'success', title: 'Pengguna berhasil dihapus'});
-                    openDaftarPengguna();
-                })
-                .catch(err => {
-                    Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
-                });
-            }
+        Swal.fire({ title: 'Hapus?', text: 'Data akan hilang permanen', icon: 'warning', showCancelButton: true })
+        .then(res => {
+            if(!res.isConfirmed) return;
+            db.ref(`users_auth/${uid}`).remove()
+            .then(() => { Toast.fire({icon:'success', title:'Pengguna dihapus'}); openDaftarPengguna(); })
+            .catch(err => Toast.fire({icon:'error', title:'Gagal: ' + err.message}));
         });
     }
 </script>
