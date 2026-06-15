@@ -6,7 +6,6 @@
     <title>CRYSTAL ADMIN - AI OJOL</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-    <!-- Tambahkan Firebase Auth SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -48,8 +47,7 @@
             max-width: 520px;
             margin: 0 auto 20px;
             position: relative;
-            /* Awalnya tersembunyi */
-            display: none;
+            display: none; /* Awalnya tersembunyi */
         }
 
         .menu-toggle {
@@ -275,7 +273,7 @@
             padding: clamp(1.5em, 4vw, 2em) !important;
             font-family: 'Plus Jakarta Sans', sans-serif !important;
             width: 95% !important;
-            max-width: 550px !important;
+            max-width: 600px !important;
         }
         .swal2-title {
             font-weight: 800 !important;
@@ -304,7 +302,7 @@
         }
         .history-table {
             width: 100%;
-            min-width: 600px;
+            min-width: 650px;
             border-collapse: collapse;
             font-size: clamp(11px, 2.5vw, 12px);
         }
@@ -329,7 +327,7 @@
             font-weight: 600;
         }
         .edit { background: #3b82f6; color: white; }
-        .reset { background: #f59e0b; color: white; }
+        .block { background: #f59e0b; color: white; }
         .delete { background: var(--danger); color: white; }
         .add-btn {
             background: #10b981;
@@ -342,7 +340,7 @@
             cursor: pointer;
             margin-bottom: 12px;
             width: 100%;
-            max-width: 200px;
+            max-width: 220px;
         }
 
         /* Khusus Layar Lebih Besar */
@@ -371,7 +369,8 @@
 <div class="page-header" id="main-header">
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
     <div class="menu-dropdown" id="main-menu">
-        <a href="#" onclick="openUserManager()">👤 Kelola Pengguna Terdaftar</a>
+        <a href="#" onclick="openRiwayatLogin()">📋 Riwayat Login</a>
+        <a href="#" onclick="openDaftarPengguna()">👥 Daftar Pengguna</a>
     </div>
 </div>
 
@@ -455,8 +454,12 @@
         if(savedPass) {
             document.getElementById('admin_pass').value = atob(savedPass);
             document.getElementById('remember_pass').checked = true;
-            // Jika ada sesi tersimpan, langsung tampilkan menu
             document.getElementById('main-header').style.display = 'flex';
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-dashboard').style.display = 'block';
+            initFirebase();
+        } else {
+            document.getElementById('main-header').style.display = 'none';
         }
     };
 
@@ -484,7 +487,6 @@
         const remember = document.getElementById('remember_pass').checked;
 
         if(btoa(input) === _0xPR2) {
-            // Tampilkan menu garis tiga setelah login berhasil
             document.getElementById('main-header').style.display = 'flex';
             
             if(remember) {
@@ -518,15 +520,13 @@
             cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Sembunyikan menu saat logout
                 document.getElementById('main-header').style.display = 'none';
                 document.getElementById('main-menu').style.display = 'none';
                 
                 document.getElementById('login-overlay').style.display = 'block';
                 document.getElementById('main-dashboard').style.display = 'none';
-                if(!localStorage.getItem('admin_session_key')) {
-                    document.getElementById('admin_pass').value = '';
-                }
+                localStorage.removeItem('admin_session_key');
+                document.getElementById('admin_pass').value = '';
             }
         });
     }
@@ -551,13 +551,10 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // ✅ Tambahan: Deteksi pengguna yang login dan simpan datanya otomatis
     auth.onAuthStateChanged((user) => {
         if (user) {
             const waktuSekarang = new Date().toLocaleString('id-ID');
             const userRef = db.ref(`users_auth/${user.uid}`);
-            
-            // Cek apakah data sudah ada, jika belum buat baru
             userRef.once('value', snapshot => {
                 if (!snapshot.exists()) {
                     userRef.set({
@@ -568,7 +565,6 @@
                         terakhir_login: waktuSekarang
                     });
                 } else {
-                    // Update waktu login terakhir
                     userRef.update({ terakhir_login: waktuSekarang });
                 }
             });
@@ -638,7 +634,7 @@
                 });
             }
         } catch (e) {
-            Swal.fire('Error', 'Gagal terhubung ke provider API.', 'error');
+            Swal.fire('Error', 'Gagal terhubung ke server provider API.', 'error');
         }
     }
 
@@ -678,56 +674,96 @@
             });
     }
 
-    // --- FUNGSI MENU & KELOLA PENGGUNA FIREBASE AUTH ---
+    // --- FUNGSI MENU ---
     function toggleMenu() {
         const menu = document.getElementById('main-menu');
         menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
     }
 
-    // Tutup menu jika klik di luar
     document.addEventListener('click', function(e) {
         if(!e.target.matches('.menu-toggle')) {
             document.getElementById('main-menu').style.display = 'none';
         }
     });
 
-    // ✅ Perbaikan: Ambil semua data pengguna yang sudah terdaftar/login
-    function openUserManager() {
-        db.ref('users_auth').orderByChild('diblokir').on('value', snapshot => {
+    // ✅ Menu: Riwayat Login
+    function openRiwayatLogin() {
+        db.ref('users_auth').orderByChild('terakhir_login').once('value', snapshot => {
             const users = [];
             snapshot.forEach(child => {
                 users.push({ uid: child.key, ...child.val() });
             });
 
-            let html = `<button class="add-btn" onclick="addNewUserAuth()">➕ Daftarkan Pengguna Baru</button>`;
+            let html = `<div class="table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Nama</th>
+                            <th>Status</th>
+                            <th>Terakhir Login</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            if(users.length === 0) {
+                html += `<tr><td colspan="4" style="text-align:center; padding:20px;">Belum ada riwayat login</td></tr>`;
+            } else {
+                users.forEach(u => {
+                    html += `
+                    <tr>
+                        <td>${u.email}</td>
+                        <td>${u.nama || '-'}</td>
+                        <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
+                        <td>${u.terakhir_login || 'Belum ada'}</td>
+                    </tr>`;
+                });
+            }
+            html += `</tbody></table></div>`;
+
+            Swal.fire({
+                title: '📋 Riwayat Login Pengguna',
+                html: html,
+                width: '95%',
+                showConfirmButton: true,
+                confirmButtonText: 'Tutup'
+            });
+        });
+    }
+
+    // ✅ Menu: Daftar Pengguna
+    function openDaftarPengguna() {
+        db.ref('users_auth').orderByChild('nama').once('value', snapshot => {
+            const users = [];
+            snapshot.forEach(child => {
+                users.push({ uid: child.key, ...child.val() });
+            });
+
+            let html = `<button class="add-btn" onclick="addNewUserAuth()">➕ Tambah Pengguna Baru</button>`;
             html += `<div class="table-container">
                 <table class="history-table">
                     <thead>
                         <tr>
-                            <th>UID</th>
                             <th>Email</th>
                             <th>Nama</th>
                             <th>Status</th>
-                            <th>Login Terakhir</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>`;
 
             if(users.length === 0) {
-                html += `<tr><td colspan="6" style="text-align:center; padding:20px;">Belum ada pengguna terdaftar atau yang pernah login</td></tr>`;
+                html += `<tr><td colspan="4" style="text-align:center; padding:20px;">Belum ada pengguna terdaftar</td></tr>`;
             } else {
                 users.forEach(u => {
                     html += `
                     <tr>
-                        <td style="font-size:10px;">${u.uid}</td>
                         <td>${u.email}</td>
                         <td>${u.nama || '-'}</td>
                         <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
-                        <td>${u.terakhir_login || 'Belum ada'}</td>
                         <td>
-                            <button class="action-btn reset" onclick="resetPassword('${u.email}')">Reset Pass</button>
-                            <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir || false})">${u.diblokir ? 'Buka Blokir' : 'Blokir'}</button>
+                            <button class="action-btn edit" onclick="editUser('${u.uid}', '${u.nama}', '${u.email}')">Ubah</button>
+                            <button class="action-btn block" onclick="toggleBlockAuth('${u.uid}', ${u.diblokir})">${u.diblokir ? 'Buka' : 'Blokir'}</button>
                             <button class="action-btn delete" onclick="deleteUserAuth('${u.uid}')">Hapus</button>
                         </td>
                     </tr>`;
@@ -736,21 +772,19 @@
             html += `</tbody></table></div>`;
 
             Swal.fire({
-                title: '👤 Kelola Pengguna Terdaftar',
+                title: '👥 Daftar Pengguna',
                 html: html,
                 width: '95%',
                 showConfirmButton: true,
                 confirmButtonText: 'Tutup'
             });
-        }, (err) => {
-            Swal.fire('Error', 'Gagal memuat data pengguna: ' + err.message, 'error');
         });
     }
 
-    // Daftarkan pengguna baru ke Firebase Auth + simpan data ke Realtime Database
+    // ✅ Tambah Pengguna Baru
     function addNewUserAuth() {
         Swal.fire({
-            title: 'Daftarkan Pengguna Baru',
+            title: 'Tambah Pengguna Baru',
             html: `
                 <div style="text-align:left; margin-top:10px;">
                     <label style="font-size:13px; text-transform:none; margin-bottom:4px;">Nama Lengkap</label>
@@ -776,22 +810,21 @@
                     return Toast.fire({icon: 'error', title: 'Isi semua kolom! Password minimal 6 karakter'});
                 }
 
-                // Buat akun di Firebase Auth
                 auth.createUserWithEmailAndPassword(email, password)
                 .then(userCredential => {
                     const user = userCredential.user;
                     const waktuSekarang = new Date().toLocaleString('id-ID');
-                    // Simpan data tambahan ke Realtime Database
                     return db.ref(`users_auth/${user.uid}`).set({
                         nama: nama,
                         email: email,
                         diblokir: false,
                         dibuat_pada: waktuSekarang,
-                        terakhir_login: waktuSekarang
+                        terakhir_login: "Belum ada"
                     });
                 })
                 .then(() => {
-                    Toast.fire({icon: 'success', title: 'Pengguna berhasil didaftarkan dan muncul di daftar'});
+                    Toast.fire({icon: 'success', title: 'Pengguna berhasil ditambahkan'});
+                    openDaftarPengguna();
                 })
                 .catch(err => {
                     let pesan = err.message;
@@ -802,20 +835,34 @@
         });
     }
 
-    // Kirim email reset password
-    function resetPassword(email) {
+    // ✅ Edit Pengguna
+    function editUser(uid, namaLama, emailLama) {
         Swal.fire({
-            title: 'Reset Kata Sandi',
-            text: `Kirim tautan reset ke ${email}?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Ya, Kirim',
-            cancelButtonText: 'Batal'
-        }).then(res => {
-            if(res.isConfirmed) {
-                auth.sendPasswordResetEmail(email)
+            title: 'Ubah Data Pengguna',
+            html: `
+                <div style="text-align:left; margin-top:10px;">
+                    <label style="font-size:13px; text-transform:none; margin-bottom:4px;">Nama Lengkap</label>
+                    <input id="edit_nama" class="swal2-input" value="${namaLama}">
+                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Email</label>
+                    <input id="edit_email" class="swal2-input" value="${emailLama}" disabled>
+                </div>
+            `,
+            focusConfirm: false,
+            preConfirm: () => {
+                return {
+                    nama: document.getElementById('edit_nama').value.trim()
+                }
+            }
+        }).then((result) => {
+            if(result.isConfirmed) {
+                const {nama} = result.value;
+                if(!nama) {
+                    return Toast.fire({icon: 'error', title: 'Nama tidak boleh kosong'});
+                }
+                db.ref(`users_auth/${uid}`).update({ nama: nama })
                 .then(() => {
-                    Toast.fire({icon: 'success', title: 'Email reset terkirim'});
+                    Toast.fire({icon: 'success', title: 'Data berhasil diperbarui'});
+                    openDaftarPengguna();
                 })
                 .catch(err => {
                     Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
@@ -824,23 +871,24 @@
         });
     }
 
-    // Ubah status blokir pengguna
+    // ✅ Blokir / Buka Blokir
     function toggleBlockAuth(uid, statusSekarang) {
         const statusBaru = !statusSekarang;
         db.ref(`users_auth/${uid}`).update({ diblokir: statusBaru })
         .then(() => {
             Toast.fire({icon: 'info', title: statusBaru ? 'Pengguna diblokir' : 'Blokir dibuka'});
+            openDaftarPengguna();
         })
         .catch(err => {
             Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
         });
     }
 
-    // Hapus data pengguna dari database
+    // ✅ Hapus Pengguna
     function deleteUserAuth(uid) {
         Swal.fire({
             title: 'Hapus Pengguna?',
-            text: "Data pengguna akan dihapus dari daftar!",
+            text: "Data akan dihapus permanen!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Ya, Hapus',
@@ -849,7 +897,8 @@
             if(res.isConfirmed) {
                 db.ref(`users_auth/${uid}`).remove()
                 .then(() => {
-                    Toast.fire({icon: 'success', title: 'Data pengguna dihapus'});
+                    Toast.fire({icon: 'success', title: 'Pengguna dihapus'});
+                    openDaftarPengguna();
                 })
                 .catch(err => {
                     Toast.fire({icon: 'error', title: 'Gagal: ' + err.message});
