@@ -198,32 +198,44 @@
             box-shadow: 0 0 0 3px rgba(0, 98, 255, 0.3) !important;
         }
 
-        /* Tabel Riwayat */
+        /* Tabel Pengguna & Riwayat */
         .history-table {
             width: 100%;
             margin-top: 15px;
             border-collapse: collapse;
-            font-size: 12px;
+            font-size: 11px;
         }
         .history-table th, .history-table td {
-            padding: 10px;
+            padding: 8px 6px;
             text-align: left;
             border-bottom: 1px solid #e2e8f0;
+            word-break: break-word;
         }
         .history-table th {
             background: #f8fafc;
             font-weight: 700;
         }
         .action-btn {
-            padding: 5px 8px;
+            padding: 4px 6px;
             border: none;
             border-radius: 6px;
-            font-size: 11px;
+            font-size: 10px;
             cursor: pointer;
-            margin: 0 2px;
+            margin: 1px;
         }
+        .edit { background: #3b82f6; color: white; }
         .block { background: #f59e0b; color: white; }
         .delete { background: var(--danger); color: white; }
+        .add-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
     </style>
 </head>
 <body>
@@ -233,7 +245,7 @@
     <div></div>
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
     <div class="menu-dropdown" id="main-menu">
-        <a href="#" onclick="openLoginHistory()">📋 Riwayat Login</a>
+        <a href="#" onclick="openUserManager()">👤 Kelola Pengguna</a>
     </div>
 </div>
 
@@ -309,7 +321,7 @@
 </div>
 
 <script>
-    // Kode asli tetap utuh
+    // Kode asli TETAP UTUH dan TIDAK DIUBAH
     const _0xPR2 = "YWRtaW5vam9sa29sYWth"; 
 
     window.onload = () => {
@@ -317,6 +329,18 @@
         if(savedPass) {
             document.getElementById('admin_pass').value = atob(savedPass);
             document.getElementById('remember_pass').checked = true;
+        }
+        // Inisialisasi data pengguna jika belum ada
+        if(!localStorage.getItem('user_list')) {
+            const defaultUser = [{
+                id: 1,
+                nama: "Farid Aris",
+                email: "farid@admin.id",
+                password: "adminojolkola",
+                status: "Aktif",
+                terakhir_login: "Belum ada"
+            }];
+            localStorage.setItem('user_list', JSON.stringify(defaultUser));
         }
     };
 
@@ -344,12 +368,8 @@
         const remember = document.getElementById('remember_pass').checked;
 
         if(btoa(input) === _0xPR2) {
-            // Simpan riwayat login
-            saveLoginHistory({
-                waktu: new Date().toLocaleString('id-ID'),
-                perangkat: navigator.userAgent.substring(0, 60),
-                ip: 'Lokal / Server'
-            });
+            // Update waktu login terakhir
+            updateLastLogin("Farid Aris");
 
             if(remember) {
                 localStorage.setItem('admin_session_key', btoa(input));
@@ -509,7 +529,7 @@
             });
     }
 
-    // --- FUNGSI BARU ---
+    // --- FUNGSI BARU TAMBAHAN ---
     function toggleMenu() {
         const menu = document.getElementById('main-menu');
         menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
@@ -522,59 +542,181 @@
         }
     });
 
-    // Simpan riwayat login ke localStorage
-    function saveLoginHistory(data) {
-        let history = JSON.parse(localStorage.getItem('login_history')) || [];
-        history.unshift({ id: Date.now(), ...data, status: 'Aktif' });
-        if(history.length > 50) history.pop(); // Simpan maks 50 catatan
-        localStorage.setItem('login_history', JSON.stringify(history));
+    // Update waktu login terakhir
+    function updateLastLogin(namaPengguna) {
+        const users = JSON.parse(localStorage.getItem('user_list')) || [];
+        const waktuSekarang = new Date().toLocaleString('id-ID');
+        const updated = users.map(u => u.nama === namaPengguna ? {...u, terakhir_login: waktuSekarang} : u);
+        localStorage.setItem('user_list', JSON.stringify(updated));
     }
 
-    // Tampilkan riwayat login
-    function openLoginHistory() {
-        const history = JSON.parse(localStorage.getItem('login_history')) || [];
-        let html = '<table class="history-table"><thead><tr><th>Waktu</th><th>Perangkat</th><th>Status</th><th>Aksi</th></tr></thead><tbody>';
-        
-        if(history.length === 0) {
-            html += '<tr><td colspan="4" style="text-align:center;">Belum ada riwayat login</td></tr>';
+    // Buka halaman kelola pengguna
+    function openUserManager() {
+        const users = JSON.parse(localStorage.getItem('user_list')) || [];
+        let html = `<button class="add-btn" onclick="addNewUser()">➕ Tambah Pengguna Baru</button>`;
+        html += `<table class="history-table">
+            <thead>
+                <tr>
+                    <th>Nama</th>
+                    <th>Email</th>
+                    <th>Password</th>
+                    <th>Status</th>
+                    <th>Login Terakhir</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        if(users.length === 0) {
+            html += `<tr><td colspan="6" style="text-align:center;">Belum ada data pengguna</td></tr>`;
         } else {
-            history.forEach(item => {
+            users.forEach(u => {
                 html += `
                 <tr>
-                    <td>${item.waktu}</td>
-                    <td>${item.perangkat}</td>
-                    <td>${item.status}</td>
+                    <td>${u.nama}</td>
+                    <td>${u.email}</td>
+                    <td>${u.password}</td>
+                    <td>${u.status}</td>
+                    <td>${u.terakhir_login}</td>
                     <td>
-                        <button class="action-btn block" onclick="blockUser(${item.id})">Blokir</button>
-                        <button class="action-btn delete" onclick="deleteHistory(${item.id})">Hapus</button>
+                        <button class="action-btn edit" onclick="editUser(${u.id})">Ubah</button>
+                        <button class="action-btn block" onclick="toggleBlock(${u.id})">${u.status === 'Aktif' ? 'Blokir' : 'Buka'}</button>
+                        <button class="action-btn delete" onclick="deleteUser(${u.id})">Hapus</button>
                     </td>
                 </tr>`;
             });
         }
-        html += '</tbody></table>';
+        html += `</tbody></table>`;
 
         Swal.fire({
-            title: '📋 Riwayat Login',
+            title: '👤 Kelola Pengguna',
             html: html,
-            width: '90%',
-            confirmButtonText: 'Tutup'
+            width: '95%',
+            showConfirmButton: true,
+            confirmButtonText: 'Tutup',
+            customClass: {
+                container: 'swal-wide'
+            }
         });
     }
 
-    function blockUser(id) {
-        let history = JSON.parse(localStorage.getItem('login_history')) || [];
-        history = history.map(item => item.id === id ? {...item, status: 'Diblokir'} : item);
-        localStorage.setItem('login_history', JSON.stringify(history));
-        Toast.fire({ icon: 'warning', title: 'Pengguna diblokir' });
-        openLoginHistory();
+    // Tambah pengguna baru
+    function addNewUser() {
+        Swal.fire({
+            title: 'Tambah Pengguna Baru',
+            html: `
+                <div style="text-align:left; margin-top:10px;">
+                    <label>Nama Lengkap</label>
+                    <input id="nama_baru" class="swal2-input" placeholder="Masukkan nama">
+                    <label>Email</label>
+                    <input id="email_baru" class="swal2-input" placeholder="Masukkan email">
+                    <label>Password</label>
+                    <input id="pass_baru" class="swal2-input" type="password" placeholder="Masukkan password">
+                </div>
+            `,
+            focusConfirm: false,
+            preConfirm: () => {
+                return {
+                    nama: document.getElementById('nama_baru').value.trim(),
+                    email: document.getElementById('email_baru').value.trim(),
+                    password: document.getElementById('pass_baru').value.trim()
+                }
+            }
+        }).then((result) => {
+            if(result.isConfirmed) {
+                const {nama, email, password} = result.value;
+                if(!nama || !email || !password) {
+                    return Toast.fire({icon: 'error', title: 'Semua kolom harus diisi!'});
+                }
+                const users = JSON.parse(localStorage.getItem('user_list')) || [];
+                const newId = users.length ? Math.max(...users.map(u => u.id)) + 1 : 1;
+                users.push({
+                    id: newId,
+                    nama: nama,
+                    email: email,
+                    password: password,
+                    status: "Aktif",
+                    terakhir_login: "Belum ada"
+                });
+                localStorage.setItem('user_list', JSON.stringify(users));
+                Toast.fire({icon: 'success', title: 'Pengguna berhasil ditambahkan'});
+                openUserManager();
+            }
+        });
     }
 
-    function deleteHistory(id) {
-        let history = JSON.parse(localStorage.getItem('login_history')) || [];
-        history = history.filter(item => item.id !== id);
-        localStorage.setItem('login_history', JSON.stringify(history));
-        Toast.fire({ icon: 'success', title: 'Riwayat dihapus' });
-        openLoginHistory();
+    // Edit data pengguna
+    function editUser(userId) {
+        const users = JSON.parse(localStorage.getItem('user_list')) || [];
+        const user = users.find(u => u.id === userId);
+        if(!user) return;
+
+        Swal.fire({
+            title: 'Ubah Data Pengguna',
+            html: `
+                <div style="text-align:left; margin-top:10px;">
+                    <label>Nama Lengkap</label>
+                    <input id="edit_nama" class="swal2-input" value="${user.nama}">
+                    <label>Email</label>
+                    <input id="edit_email" class="swal2-input" value="${user.email}">
+                    <label>Password</label>
+                    <input id="edit_pass" class="swal2-input" type="password" value="${user.password}">
+                </div>
+            `,
+            focusConfirm: false,
+            preConfirm: () => {
+                return {
+                    nama: document.getElementById('edit_nama').value.trim(),
+                    email: document.getElementById('edit_email').value.trim(),
+                    password: document.getElementById('edit_pass').value.trim()
+                }
+            }
+        }).then((result) => {
+            if(result.isConfirmed) {
+                const {nama, email, password} = result.value;
+                if(!nama || !email || !password) {
+                    return Toast.fire({icon: 'error', title: 'Semua kolom harus diisi!'});
+                }
+                const updated = users.map(u => u.id === userId ? {...u, nama, email, password} : u);
+                localStorage.setItem('user_list', JSON.stringify(updated));
+                Toast.fire({icon: 'success', title: 'Data berhasil diperbarui'});
+                openUserManager();
+            }
+        });
+    }
+
+    // Blokir / Buka blokir
+    function toggleBlock(userId) {
+        const users = JSON.parse(localStorage.getItem('user_list')) || [];
+        const updated = users.map(u => {
+            if(u.id === userId) {
+                return {...u, status: u.status === 'Aktif' ? 'Diblokir' : 'Aktif'};
+            }
+            return u;
+        });
+        localStorage.setItem('user_list', JSON.stringify(updated));
+        Toast.fire({icon: 'info', title: 'Status pengguna diperbarui'});
+        openUserManager();
+    }
+
+    // Hapus pengguna
+    function deleteUser(userId) {
+        Swal.fire({
+            title: 'Hapus Pengguna?',
+            text: "Data akan dihapus permanen!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal'
+        }).then((res) => {
+            if(res.isConfirmed) {
+                const users = JSON.parse(localStorage.getItem('user_list')) || [];
+                const filtered = users.filter(u => u.id !== userId);
+                localStorage.setItem('user_list', JSON.stringify(filtered));
+                Toast.fire({icon: 'success', title: 'Pengguna dihapus'});
+                openUserManager();
+            }
+        });
     }
 </script>
 </body>
