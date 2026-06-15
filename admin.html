@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CRYSTAL ADMIN - AI OJOL</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -19,12 +19,14 @@
             --card-white: rgba(255, 255, 255, 0.98);
             --danger: #ef4444;
             --gray: #64748b;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body { 
@@ -33,7 +35,7 @@
             background-image: radial-gradient(at 0% 0%, rgba(0, 98, 255, 0.05) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(0, 212, 255, 0.05) 0px, transparent 50%);
             color: var(--text-main);
             min-height: 100vh; 
-            padding: 20px;
+            padding: 16px;
         }
 
         /* Header & Menu */
@@ -41,52 +43,60 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            max-width: 460px;
+            max-width: 520px;
             margin: 0 auto 20px;
+            position: relative;
         }
 
         .menu-toggle {
-            font-size: 24px;
+            font-size: 26px;
             cursor: pointer;
-            padding: 8px;
+            padding: 8px 12px;
             color: var(--text-main);
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .menu-toggle:hover {
+            background: #f1f5f9;
         }
 
         .menu-dropdown {
             position: absolute;
-            top: 60px;
-            right: 20px;
+            top: 45px;
+            right: 0;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
             width: 220px;
             z-index: 100;
             display: none;
             overflow: hidden;
+            border: 1px solid #e2e8f0;
         }
 
         .menu-dropdown a {
             display: block;
-            padding: 12px 16px;
+            padding: 14px 18px;
             text-decoration: none;
             color: var(--text-main);
-            font-size: 14px;
-            transition: 0.2s;
+            font-size: 15px;
+            transition: background 0.2s;
         }
 
         .menu-dropdown a:hover {
             background: #f1f5f9;
         }
 
+        /* Kartu Utama */
         .card, #login-overlay { 
             background: var(--card-white); 
-            padding: 30px; 
+            padding: clamp(24px, 5vw, 36px); 
             border-radius: 24px; 
             width: 100%; 
-            max-width: 460px; 
+            max-width: 520px; 
             margin: 0 auto;
             border: 1px solid #e2e8f0; 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow);
             position: relative;
             z-index: 5;
         }
@@ -94,30 +104,58 @@
         .card { display: none; }
 
         h2 { 
-            font-weight: 800; font-size: 20px; text-align: center; margin-bottom: 20px; 
+            font-weight: 800; 
+            font-size: clamp(18px, 5vw, 22px); 
+            text-align: center; 
+            margin-bottom: 24px; 
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            line-height: 1.3;
         }
 
         .status-box { 
-            padding: 12px; border-radius: 12px; margin-bottom: 20px; 
-            text-align: center; font-size: 11px; font-weight: 700; 
-            background: #f1f5f9; color: #64748b;
+            padding: 14px; 
+            border-radius: 12px; 
+            margin-bottom: 24px; 
+            text-align: center; 
+            font-size: clamp(11px, 2.5vw, 12px); 
+            font-weight: 700; 
+            background: #f1f5f9; 
+            color: #64748b;
         }
 
         .status-online { background: #f0fdf4 !important; color: #16a34a !important; }
 
-        .input-group { margin-bottom: 18px; }
+        .input-group { margin-bottom: 20px; }
         
-        label { display: block; font-size: 10px; font-weight: 800; color: #94a3b8; margin-bottom: 6px; text-transform: uppercase; }
+        label { 
+            display: block; 
+            font-size: clamp(10px, 2.5vw, 11px); 
+            font-weight: 800; 
+            color: #94a3b8; 
+            margin-bottom: 8px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+        }
 
-        .input-wrapper { display: flex; gap: 8px; align-items: center; width: 100%; }
+        .input-wrapper { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            width: 100%; 
+            flex-wrap: wrap;
+        }
 
         input, select { 
-            flex: 1; padding: 12px; background: #ffffff !important;
-            border: 2px solid #e2e8f0; border-radius: 12px; 
-            font-family: 'JetBrains Mono', monospace; font-size: 13px; 
-            pointer-events: auto !important;
+            flex: 1 1 200px; 
+            padding: 14px; 
+            background: #ffffff !important;
+            border: 2px solid #e2e8f0; 
+            border-radius: 12px; 
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: clamp(13px, 3vw, 14px); 
+            min-width: 0;
         }
 
         input:focus { border-color: var(--primary); outline: none; }
@@ -126,87 +164,148 @@
             position: relative;
             display: flex;
             align-items: center;
+            width: 100%;
         }
         .toggle-password {
             position: absolute;
-            right: 15px;
+            right: 16px;
             cursor: pointer;
             color: #94a3b8;
-            font-size: 18px;
+            font-size: 20px;
             z-index: 10;
             user-select: none;
         }
 
         .check-btn {
-            padding: 12px 15px; background: #f1f5f9; border: none; border-radius: 12px;
-            color: var(--primary); font-size: 11px; font-weight: 700; cursor: pointer;
-            transition: 0.2s; white-space: nowrap;
+            padding: 14px 16px; 
+            background: #f1f5f9; 
+            border: none; 
+            border-radius: 12px;
+            color: var(--primary); 
+            font-size: clamp(11px, 2.5vw, 12px); 
+            font-weight: 700; 
+            cursor: pointer;
+            transition: 0.2s; 
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .check-btn:hover { background: #e2e8f0; }
 
         .switch {
-            position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; cursor: pointer;
+            position: relative; 
+            display: inline-block; 
+            width: 44px; 
+            height: 24px; 
+            flex-shrink: 0; 
+            cursor: pointer;
         }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #cbd5e1; transition: .4s; border-radius: 24px;
+            position: absolute; 
+            cursor: pointer; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0;
+            background-color: #cbd5e1; 
+            transition: .4s; 
+            border-radius: 24px;
         }
         .slider:before {
-            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
-            background-color: white; transition: .4s; border-radius: 50%;
+            position: absolute; 
+            content: ""; 
+            height: 18px; 
+            width: 18px; 
+            left: 3px; 
+            bottom: 3px;
+            background-color: white; 
+            transition: .4s; 
+            border-radius: 50%;
         }
         input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(18px); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
         .save-btn { 
-            width: 100%; padding: 16px; margin-top: 10px; border-radius: 14px;
+            width: 100%; 
+            padding: 16px; 
+            margin-top: 12px; 
+            border-radius: 14px;
             background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-            color: white; border: none; font-weight: 700; cursor: pointer;
+            color: white; 
+            border: none; 
+            font-weight: 700; 
+            font-size: clamp(14px, 3vw, 15px);
+            cursor: pointer;
+            transition: transform 0.2s;
         }
         .save-btn:active { transform: scale(0.98); }
 
         .logout-btn {
-            width: 100%; padding: 12px; margin-top: 15px; border-radius: 12px;
-            background: transparent; color: var(--danger); border: 2px solid var(--danger);
-            font-weight: 700; cursor: pointer; transition: 0.3s;
+            width: 100%; 
+            padding: 14px; 
+            margin-top: 16px; 
+            border-radius: 12px;
+            background: transparent; 
+            color: var(--danger); 
+            border: 2px solid var(--danger);
+            font-weight: 700; 
+            font-size: clamp(14px, 3vw, 15px);
+            cursor: pointer; 
+            transition: 0.3s;
         }
         .logout-btn:hover { background: var(--danger); color: white; }
 
         .remember-me {
-            display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12px; color: #64748b;
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            margin-top: 12px; 
+            font-size: clamp(12px, 2.8vw, 13px); 
+            color: #64748b;
         }
-        .remember-me input { flex: none; width: 16px; height: 16px; cursor: pointer; }
+        .remember-me input { flex: none; width: 18px; height: 18px; cursor: pointer; }
 
-        /* SweetAlert2 Custom */
+        /* SweetAlert2 Responsif */
         .swal2-popup {
-            border-radius: 24px !important;
-            padding: 2em !important;
+            border-radius: 20px !important;
+            padding: clamp(1.5em, 4vw, 2em) !important;
             font-family: 'Plus Jakarta Sans', sans-serif !important;
+            width: 95% !important;
+            max-width: 550px !important;
         }
         .swal2-title {
             font-weight: 800 !important;
             color: var(--text-main) !important;
+            font-size: clamp(18px, 4vw, 22px) !important;
         }
         .swal2-confirm {
             background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
-            border-radius: 12px !important;
-            padding: 12px 30px !important;
+            border-radius: 10px !important;
+            padding: 12px 24px !important;
             font-weight: 700 !important;
+            font-size: clamp(14px, 3vw, 15px) !important;
         }
         .swal2-styled.swal2-confirm:focus {
             box-shadow: 0 0 0 3px rgba(0, 98, 255, 0.3) !important;
         }
 
-        /* Tabel Pengguna & Riwayat */
+        /* Tabel Responsif */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
         .history-table {
             width: 100%;
-            margin-top: 15px;
+            min-width: 550px;
             border-collapse: collapse;
-            font-size: 11px;
+            font-size: clamp(11px, 2.5vw, 12px);
         }
         .history-table th, .history-table td {
-            padding: 8px 6px;
+            padding: 10px 8px;
             text-align: left;
             border-bottom: 1px solid #e2e8f0;
             word-break: break-word;
@@ -214,14 +313,16 @@
         .history-table th {
             background: #f8fafc;
             font-weight: 700;
+            white-space: nowrap;
         }
         .action-btn {
-            padding: 4px 6px;
+            padding: 6px 8px;
             border: none;
             border-radius: 6px;
-            font-size: 10px;
+            font-size: clamp(10px, 2.2vw, 11px);
             cursor: pointer;
-            margin: 1px;
+            margin: 2px;
+            font-weight: 600;
         }
         .edit { background: #3b82f6; color: white; }
         .block { background: #f59e0b; color: white; }
@@ -230,11 +331,33 @@
             background: #10b981;
             color: white;
             border: none;
-            padding: 8px 12px;
+            padding: 10px 16px;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: clamp(12px, 2.8vw, 13px);
+            font-weight: 600;
             cursor: pointer;
             margin-bottom: 12px;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        /* Khusus Layar Lebih Besar */
+        @media (min-width: 768px) {
+            body {
+                padding: 32px;
+            }
+            .page-header {
+                max-width: 600px;
+            }
+            .card, #login-overlay {
+                max-width: 600px;
+            }
+            .input-wrapper {
+                flex-wrap: nowrap;
+            }
+            .add-btn {
+                width: auto;
+            }
         }
     </style>
 </head>
@@ -554,21 +677,22 @@
     function openUserManager() {
         const users = JSON.parse(localStorage.getItem('user_list')) || [];
         let html = `<button class="add-btn" onclick="addNewUser()">➕ Tambah Pengguna Baru</button>`;
-        html += `<table class="history-table">
-            <thead>
-                <tr>
-                    <th>Nama</th>
-                    <th>Email</th>
-                    <th>Password</th>
-                    <th>Status</th>
-                    <th>Login Terakhir</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>`;
+        html += `<div class="table-container">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Nama</th>
+                        <th>Email</th>
+                        <th>Password</th>
+                        <th>Status</th>
+                        <th>Login Terakhir</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>`;
 
         if(users.length === 0) {
-            html += `<tr><td colspan="6" style="text-align:center;">Belum ada data pengguna</td></tr>`;
+            html += `<tr><td colspan="6" style="text-align:center; padding:20px;">Belum ada data pengguna</td></tr>`;
         } else {
             users.forEach(u => {
                 html += `
@@ -586,17 +710,14 @@
                 </tr>`;
             });
         }
-        html += `</tbody></table>`;
+        html += `</tbody></table></div>`;
 
         Swal.fire({
             title: '👤 Kelola Pengguna',
             html: html,
             width: '95%',
             showConfirmButton: true,
-            confirmButtonText: 'Tutup',
-            customClass: {
-                container: 'swal-wide'
-            }
+            confirmButtonText: 'Tutup'
         });
     }
 
@@ -606,11 +727,11 @@
             title: 'Tambah Pengguna Baru',
             html: `
                 <div style="text-align:left; margin-top:10px;">
-                    <label>Nama Lengkap</label>
+                    <label style="font-size:13px; text-transform:none; margin-bottom:4px;">Nama Lengkap</label>
                     <input id="nama_baru" class="swal2-input" placeholder="Masukkan nama">
-                    <label>Email</label>
+                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Email</label>
                     <input id="email_baru" class="swal2-input" placeholder="Masukkan email">
-                    <label>Password</label>
+                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Password</label>
                     <input id="pass_baru" class="swal2-input" type="password" placeholder="Masukkan password">
                 </div>
             `,
@@ -655,11 +776,11 @@
             title: 'Ubah Data Pengguna',
             html: `
                 <div style="text-align:left; margin-top:10px;">
-                    <label>Nama Lengkap</label>
+                    <label style="font-size:13px; text-transform:none; margin-bottom:4px;">Nama Lengkap</label>
                     <input id="edit_nama" class="swal2-input" value="${user.nama}">
-                    <label>Email</label>
+                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Email</label>
                     <input id="edit_email" class="swal2-input" value="${user.email}">
-                    <label>Password</label>
+                    <label style="font-size:13px; text-transform:none; margin-bottom:4px; margin-top:8px;">Password</label>
                     <input id="edit_pass" class="swal2-input" type="password" value="${user.password}">
                 </div>
             `,
