@@ -241,7 +241,25 @@
         .loader-text { color: white; font-weight: 400; letter-spacing: 4px; font-size: 10px; text-transform: uppercase; opacity: 0.5; }
         .loader-hidden { opacity: 0; visibility: hidden; }
 
-        .swal2-popup { border-radius: 25px !important; font-family: 'Outfit', sans-serif !important; }
+        /* ✅ PERBAIKAN POSISI POPUP AGAR TIDAK TENGGELAM */
+        .swal2-container {
+            z-index: 200000 !important;
+            position: fixed !important;
+            inset: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 15px !important;
+            box-sizing: border-box !important;
+        }
+        .swal2-popup {
+            z-index: 200001 !important;
+            margin: auto !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+            border-radius: 25px !important;
+            font-family: 'Outfit', sans-serif !important;
+        }
         @keyframes gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
         /* ------------------ LOGIN BARU EMAIL/PASSWORD ------------------ */
@@ -1321,13 +1339,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-                
