@@ -1,544 +1,681 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset='UTF-8'/>
-    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover' name='viewport'/>
-    <title>OJOL AI ASISTEN</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CRYSTAL ADMIN - AI OJOL</title>
     
-    <meta name="theme-color" content="#1e293b"/>
-    <meta name="apple-mobile-web-app-capable" content="yes"/>
-    <meta name="apple-mobile-web-status-bar-style" content="default"/>
-    <meta name="apple-mobile-web-app-title" content="OJOL AI"/>
-    <link rel="apple-touch-icon" href="https://i.ibb.co.com/cSR6TWgd/20260514-222136.png"/>
-    <link rel="manifest" href="manifest.json"/>
-    
-    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap' rel='stylesheet'/>
-    
-    <link rel="stylesheet" href="style.css"/>
-    
-    <script src='https://unpkg.com/lucide@latest'></script>
-    <script src='https://cdn.jsdelivr.net/npm/marked/marked.min.js'></script>
-    <script src='https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js'></script>
-    <script src='https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js'></script>
-    <script src='https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js'></script>
-    <script src='https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js'></script>
-    <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* ==== CSS TAMBAHAN FITUR BARU ==== */
-        .page-full{position:fixed;inset:0;background:#f1f5f9;z-index:9999;display:none;flex-direction:column;}
-        .page-full.active{display:flex;}
-        .profile-avatar-wrap{width:110px;height:110px;border-radius:50%;margin:0 auto 15px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;cursor:pointer;border:3px solid #6366f1;}
-        .profile-avatar-wrap img{width:100%;height:100%;object-fit:cover;}
-        .avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;opacity:0;transition:.2s}
-        .profile-avatar-wrap:hover .avatar-overlay{opacity:1}
-        .content-card{background:#fff;border-radius:16px;padding:18px;margin:15px;box-shadow:0 1px 2px #0000000a;}
-        .content-card h4{margin:0 0 10px;color:#1e293b}
-        .content-card p,.content-card li{color:#475569;font-size:14px;line-height:1.7}
+        :root {
+            --primary: #0062ff;
+            --secondary: #00d4ff;
+            --bg-light: #f8fafc;
+            --text-main: #1e293b;
+            --card-white: rgba(255, 255, 255, 0.98);
+            --danger: #ef4444;
+            --gray: #64748b;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg-light); 
+            background-image: radial-gradient(at 0% 0%, rgba(0, 98, 255, 0.05) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(0, 212, 255, 0.05) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh; 
+            padding: 16px;
+        }
+
+        /* Header & Menu */
+        .page-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            max-width: 520px;
+            margin: 0 auto 20px;
+            position: relative;
+            display: none;
+        }
+
+        .menu-toggle {
+            font-size: 26px;
+            cursor: pointer;
+            padding: 8px 12px;
+            color: var(--text-main);
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .menu-toggle:hover {
+            background: #f1f5f9;
+        }
+
+        .menu-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            width: 220px;
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .menu-dropdown a {
+            display: block;
+            padding: 14px 18px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-size: 15px;
+            transition: background 0.2s;
+        }
+
+        .menu-dropdown a:hover {
+            background: #f1f5f9;
+        }
+
+        /* Kartu Utama */
+        .card, #login-overlay { 
+            background: var(--card-white); 
+            padding: clamp(24px, 5vw, 36px); 
+            border-radius: 24px; 
+            width: 100%; 
+            max-width: 520px; 
+            margin: 0 auto;
+            border: 1px solid #e2e8f0; 
+            box-shadow: var(--shadow);
+            position: relative;
+            z-index: 5;
+        }
+
+        .card { display: none; }
+
+        h2 { 
+            font-weight: 800; 
+            font-size: clamp(18px, 5vw, 22px); 
+            text-align: center; 
+            margin-bottom: 24px; 
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            line-height: 1.3;
+        }
+
+        .status-box { 
+            padding: 14px; 
+            border-radius: 12px; 
+            margin-bottom: 24px; 
+            text-align: center; 
+            font-size: clamp(11px, 2.5vw, 12px); 
+            font-weight: 700; 
+            background: #f1f5f9; 
+            color: #64748b;
+        }
+
+        .status-online { background: #f0fdf4 !important; color: #16a34a !important; }
+
+        .input-group { margin-bottom: 20px; }
+        
+        label { 
+            display: block; 
+            font-size: clamp(10px, 2.5vw, 11px); 
+            font-weight: 800; 
+            color: #94a3b8; 
+            margin-bottom: 8px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            width: 100%; 
+            flex-wrap: wrap;
+        }
+
+        input, select { 
+            flex: 1 1 200px; 
+            padding: 14px; 
+            background: #ffffff !important;
+            border: 2px solid #e2e8f0; 
+            border-radius: 12px; 
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: clamp(13px, 3vw, 14px); 
+            min-width: 0;
+        }
+
+        input:focus { border-color: var(--primary); outline: none; }
+
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 20px;
+            z-index: 10;
+            user-select: none;
+        }
+
+        .check-btn {
+            padding: 14px 16px; 
+            background: #f1f5f9; 
+            border: none; 
+            border-radius: 12px;
+            color: var(--primary); 
+            font-size: clamp(11px, 2.5vw, 12px); 
+            font-weight: 700; 
+            cursor: pointer;
+            transition: 0.2s; 
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .check-btn:hover { background: #e2e8f0; }
+
+        .switch {
+            position: relative; 
+            display: inline-block; 
+            width: 44px; 
+            height: 24px; 
+            flex-shrink: 0; 
+            cursor: pointer;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; 
+            cursor: pointer; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0;
+            background-color: #cbd5e1; 
+            transition: .4s; 
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; 
+            content: ""; 
+            height: 18px; 
+            width: 18px; 
+            left: 3px; 
+            bottom: 3px;
+            background-color: white; 
+            transition: .4s; 
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .save-btn { 
+            width: 100%; 
+            padding: 16px; 
+            margin-top: 12px; 
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+            color: white; 
+            border: none; 
+            font-weight: 700; 
+            font-size: clamp(14px, 3vw, 15px);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .save-btn:active { transform: scale(0.98); }
+
+        .logout-btn {
+            width: 100%; 
+            padding: 14px; 
+            margin-top: 16px; 
+            border-radius: 12px;
+            background: transparent; 
+            color: var(--danger); 
+            border: 2px solid var(--danger);
+            font-weight: 700; 
+            font-size: clamp(14px, 3vw, 15px);
+            cursor: pointer; 
+            transition: 0.3s;
+        }
+        .logout-btn:hover { background: var(--danger); color: white; }
+
+        .remember-me {
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            margin-top: 12px; 
+            font-size: clamp(12px, 2.8vw, 13px); 
+            color: #64748b;
+        }
+        .remember-me input { flex: none; width: 18px; height: 18px; cursor: pointer; }
+
+        /* SweetAlert2 Responsif */
+        .swal2-popup {
+            border-radius: 20px !important;
+            padding: clamp(1.5em, 4vw, 2em) !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            width: 95% !important;
+            max-width: 600px !important;
+        }
+        .swal2-title {
+            font-weight: 800 !important;
+            color: var(--text-main) !important;
+            font-size: clamp(18px, 4vw, 22px) !important;
+        }
+        .swal2-confirm {
+            background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+            border-radius: 10px !important;
+            padding: 12px 24px !important;
+            font-weight: 700 !important;
+            font-size: clamp(14px, 3vw, 15px) !important;
+        }
+        .swal2-styled.swal2-confirm:focus {
+            box-shadow: 0 0 0 3px rgba(0, 98, 255, 0.3) !important;
+        }
+
+        /* Tabel Responsif */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        .history-table {
+            width: 100%;
+            min-width: 750px;
+            border-collapse: collapse;
+            font-size: clamp(11px, 2.5vw, 12px);
+        }
+        .history-table th, .history-table td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            word-break: break-word;
+        }
+        .history-table th {
+            background: #f8fafc;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .action-btn {
+            padding: 5px 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: clamp(10px, 2.2vw, 11px);
+            cursor: pointer;
+            margin: 2px;
+            font-weight: 600;
+            background: #8b5cf6;
+            color: white;
+        }
     </style>
 </head>
-<body onclick='closeDropdownOuter(event)'>
+<body>
 
-    <div id='promo-popup'>
-        <div class='popup-content'>
-            <button class='close-popup' onclick='closePromo()'>
-                <i data-lucide='x' size='22'></i>
-            </button>
-            <img src='https://i.ibb.co.com/ynrvKYWM/file-00000000d7b47208bfd040beb1cb19de.png'/>
+<!-- Header dengan Menu Garis Tiga -->
+<div class="page-header" id="main-header">
+    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+    <div class="menu-dropdown" id="main-menu">
+        <a href="#" onclick="openRiwayatLogin()">📋 Riwayat Login</a>
+    </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-overlay">
+    <h2>FARID ARIS</h2>
+    <div class="status-box">Security Protocol Level 1</div>
+    <div class="input-group">
+        <label>Hanya farid yang tahu passwordnya😎</label>
+        <div class="password-container">
+            <input id="admin_pass" placeholder="Enter password..." type="password"/>
+            <span class="toggle-password" onclick="togglePassword()">👁️</span>
         </div>
     </div>
-
-    <!-- ============== HALAMAN BARU: PROFIL ============== -->
-    <div id='profile-page' class='page-full'>
-        <header style='background:white;padding:15px 20px;display:flex;align-items:center;border-bottom:1px solid #e2e8f0;'>
-            <button onclick='toggleProfile()' style='background:none;border:none;cursor:pointer;padding:5px;'>
-                <i color='#1e293b' data-lucide='chevron-left' size='24'></i>
-            </button>
-            <b style='flex:1;text-align:center;color:#1e293b;margin-right:34px;font-size:18px;'>PROFIL SAYA</b>
-        </header>
-        <div style='flex:1;overflow-y:auto;padding:20px;'>
-            <div class='content-card' style='text-align:center;'>
-                <input type='file' id='avatar-input' accept='image/*' style='display:none' onchange='compressAndUploadAvatar(this)'>
-                <div class='profile-avatar-wrap' onclick="document.getElementById('avatar-input').click()">
-                    <img id='preview-avatar' src='https://i.ibb.co.com/cSR6TWgd/20260514-222136.png' alt='avatar'>
-                    <div class='avatar-overlay'>
-                        <i data-lucide='camera' size='22'></i>
-                        <span style='margin-top:4px'>Ubah Foto</span>
-                    </div>
-                </div>
-                <div style='font-size:12px;color:#64748b;margin-top:6px'>Klik foto untuk mengubah · otomatis dikompresi</div>
-
-                <div class='form-group' style='text-align:left;margin-top:18px'>
-                    <label>Nama Lengkap</label>
-                    <input type='text' id='edit-name' placeholder='Nama Anda'>
-                </div>
-                <div class='form-group' style='text-align:left'>
-                    <label>Email (tidak bisa diubah)</label>
-                    <input type='email' id='edit-email' readonly style='background:#f1f5f9;color:#64748b'>
-                </div>
-
-                <button onclick='saveProfile()' style='width:100%;padding:14px;background:#6366f1;color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin-top:6px;'>
-                    <i data-lucide='save' size='16' style='vertical-align:middle;margin-right:6px'></i>SIMPAN PERUBAHAN
-                </button>
-
-                <hr style='border:none;border-top:1px dashed #e2e8f0;margin:20px 0'>
-
-                <button onclick='resetPasswordFromProfile()' style='width:100%;padding:13px;background:#fff;color:#ea580c;border:1px solid #fed7aa;border-radius:12px;font-weight:600;cursor:pointer;'>
-                    <i data-lucide='key-round' size='16' style='vertical-align:middle;margin-right:6px'></i>RESET KATA SANDI
-                </button>
-                <div style='font-size:11px;color:#94a3b8;margin-top:6px'>Link akan dikirim ke email Anda</div>
-            </div>
-        </div>
+    <div class="remember-me">
+        <input id="remember_pass" type="checkbox"/>
+        <label for="remember_pass" style="text-transform: none; color: inherit; font-weight: 600; margin-bottom: 0;">Simpan password di perangkat ini</label>
     </div>
+    <button class="save-btn" onclick="checkLogin()">Open Dashboard</button>
+</div>
 
-    <!-- ============== HALAMAN BARU: KEBIJAKAN PRIVASI ============== -->
-    <div id='privacy-page' class='page-full'>
-        <header style='background:white;padding:15px 20px;display:flex;align-items:center;border-bottom:1px solid #e2e8f0;'>
-            <button onclick='togglePrivacy()' style='background:none;border:none;cursor:pointer;padding:5px;'>
-                <i color='#1e293b' data-lucide='chevron-left' size='24'></i>
-            </button>
-            <b style='flex:1;text-align:center;color:#1e293b;margin-right:34px;font-size:18px;'>KEBIJAKAN PRIVASI</b>
-        </header>
-        <div style='flex:1;overflow-y:auto;padding:10px 0;'>
-            <div class='content-card'>
-                <h4>1. Data yang Kami Kumpulkan</h4>
-                <p>Kami mengumpulkan nama, alamat email, foto profil, serta riwayat percakapan dengan AI semata‑mata untuk keperluan autentikasi akun dan penyimpanan data pribadi Anda di layanan OJOL AI ASISTEN.</p>
-            </div>
-            <div class='content-card'>
-                <h4>2. Penyimpanan & Keamanan</h4>
-                <p>Data disimpan di layanan Google Firebase dengan standar enkripsi. Kami tidak pernah membagikan, menjual, atau menyewakan data pribadi Anda kepada pihak ketiga tanpa persetujuan sah.</p>
-            </div>
-            <div class='content-card'>
-                <h4>3. Hak Pengguna</h4>
-                <p>Anda berhak mengubah data profil, meminta penghapusan akun beserta seluruh datanya, serta keluar kapan saja melalui menu yang tersedia.</p>
-            </div>
-            <div class='content-card'>
-                <h4>4. Perubahan Kebijakan</h4>
-                <p>Kebijakan ini dapat diperbarui sewaktu‑waktu. Perubahan besar akan kami informasikan melalui pembaruan aplikasi.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============== HALAMAN BARU: KETENTUAN LAYANAN ============== -->
-    <div id='tos-page' class='page-full'>
-        <header style='background:white;padding:15px 20px;display:flex;align-items:center;border-bottom:1px solid #e2e8f0;'>
-            <button onclick='toggleTos()' style='background:none;border:none;cursor:pointer;padding:5px;'>
-                <i color='#1e293b' data-lucide='chevron-left' size='24'></i>
-            </button>
-            <b style='flex:1;text-align:center;color:#1e293b;margin-right:34px;font-size:18px;'>KETENTUAN LAYANAN</b>
-        </header>
-        <div style='flex:1;overflow-y:auto;padding:10px 0;'>
-            <div class='content-card'>
-                <h4>1. Penerimaan Ketentuan</h4>
-                <p>Dengan mendaftar dan menggunakan OJOL AI ASISTEN, Anda dianggap telah membaca, memahami, dan menyetujui seluruh syarat dan ketentuan yang berlaku.</p>
-            </div>
-            <div class='content-card'>
-                <h4>2. Penggunaan Layanan</h4>
-                <p>Layanan ini bertujuan sebagai asisten informasi. Jawaban AI adalah saran dan bukan keputusan mutlak. Pengguna bertanggung jawab penuh atas setiap tindakan yang diambil berdasarkan hasil percakapan.</p>
-            </div>
-            <div class='content-card'>
-                <h4>3. Larangan</h4>
-                <p>Dilarang keras menggunakan layanan untuk hal‑hal yang melanggar hukum, menyebarkan ujaran kebencian, penipuan, atau merugikan pihak lain.</p>
-            </div>
-            <div class='content-card'>
-                <h4>4. Pembatasan Tanggung Jawab</h4>
-                <p>Pengembang tidak bertanggung jawab atas kerugian langsung maupun tidak langsung yang timbul akibat penggunaan atau ketidaktersediaan layanan.</p>
-            </div>
-        </div>
-    </div>
-
-    <div id='donation-page'>
-        <header style='background: white; padding: 15px 20px; display: flex; align-items: center; border-bottom: 1px solid #e2e8f0;'>
-            <button onclick='toggleDonation()' style='background:none; border:none; cursor:pointer; padding:5px;'>
-                <i color='#1e293b' data-lucide='chevron-left' size='24'></i>
-            </button>
-            <b style='flex:1; text-align:center; color:#1e293b; margin-right:34px; font-size:18px;'>DONASI PENGEMBANG</b>
-        </header>
-        <div class='donation-card'>
-            <div style='background:#f0f9ff; width:70px; height:70px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto;'>
-                <i color='#0369a1' data-lucide='heart' size='35'></i>
-            </div>
-            <h3 style='margin:0; color:#1e293b;'>Dukung Kami</h3>
-            <p style='color:#64748b; font-size:14px; line-height:1.6; margin:10px 0 15px 0;'>Donasi Anda sangat membantu kami dalam membiayai server dan pengembangan fitur AI Ojol kedepannya agar tetap bisa digunakan gratis.</p>
-            
-            <div style='font-size:13px; color:#6366f1; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-top:5px;'>Scan via QRIS (Semua E-Wallet / Bank)</div>
-            <div class='qris-container'>
-                <img alt='QRIS Donasi' src='https://i.ibb.co.com/6RjP10pT/20260521-190324.jpg'/>
-            </div>
-
-            <div style='font-size:13px; color:#64748b; font-weight:700; text-transform:uppercase; margin-top:15px;'>Atau Transfer via BANK NOBU</div>
-            <div class='ovo-badge'>
-                <span>86101085304</span>
-            </div>
-            <p style='font-size:16px; color:#000000; margin: 5px 0 15px 0;'>Atas Nama : <b>FENY ELFIANY</b></p>
-            
-            <button onclick='copyOvo()' style='width:100%; padding:15px; background:#1e293b; color:white; border:none; border-radius:15px; font-weight:700; cursor:pointer; margin-top:10px;'>SALIN NOMOR REKENING</button>
-        </div>
-    </div>
-
-    <div id='loader-wrapper'>
-        <div class='loader-content'>
-            <div class='ai-text-logo'>AI OJOL ASISTEN</div>
-            <div class='loader-text'>Sedang Memuat</div>
-        </div>
-    </div>
-
-    <div class='overlay-sidebar' id='overlay-sidebar' onclick='toggleSidebar()'></div>
-    <div class='sidebar' id='sidebar'>
-        <div class='sidebar-header'>
-            <b style='color:#1e293b'>Riwayat Chat</b>
-            <button onclick='toggleSidebar()' style='background:none; border:none; cursor:pointer;'><i color='#64748b' data-lucide='x' size='20'></i></button>
-        </div>
-        <button class='btn-new-chat' onclick='startNewChat()'>
-            <i data-lucide='plus' size='18'></i> Percakapan Baru
-        </button>
-        <div class='history-list' id='history-list'></div>
-        <div class='sidebar-footer'>
-
-            <!-- ========== TOMBOL BARU DI SIDEBAR ========== -->
-            <button onclick='toggleProfile();toggleSidebar()' style='width:100%;padding:12px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;color:#1e293b;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:5px;'>
-                <i color='#0ea5e9' data-lucide='user-circle-2' size='18'></i> Profil Saya
-            </button>
-            <button onclick='togglePrivacy();toggleSidebar()' style='width:100%;padding:12px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;color:#1e293b;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:5px;'>
-                <i color='#10b981' data-lucide='shield-check' size='18'></i> Kebijakan Privasi
-            </button>
-            <button onclick='toggleTos();toggleSidebar()' style='width:100%;padding:12px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;color:#1e293b;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:5px;'>
-                <i color='#f59e0b' data-lucide='file-text' size='18'></i> Ketentuan Layanan
-            </button>
-            <!-- ========== AKHIR TOMBOL BARU ========== -->
-
-            <button onclick='toggleDonation();toggleSidebar()' style='width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; color: #1e293b; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-bottom:5px;'>
-                <i color='#ef4444' data-lucide='heart' size='18'></i> Donasi Pengembang
-            </button>
-            <button class='btn-logout-sidebar' onclick='logout()'>
-                <i data-lucide='log-out' size='18'></i> Keluar Akun
-            </button>
-        </div>
-    </div>
-
-    <div id='login-overlay'>
-        <div class='login-card'>
-            <h2>OJOL AI</h2>
-            <div class='branding'>Developed by Farid Aris</div>
-
-            <div id="login-form">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="email" placeholder="Masukkan email Anda" required>
-                </div>
-                <div class="form-group">
-                    <label>Kata Sandi</label>
-                    <input type="password" id="password" placeholder="Masukkan kata sandi" required>
-                    <button class="pwd-toggle" onclick="toggleView('password')"><i data-lucide='eye' size='18'></i></button>
-                </div>
-                <button class="btn-login" onclick="loginEmail()">Masuk</button>
-                <div class="link-text">Belum punya akun? <a onclick="showRegister()">Daftar Sekarang</a></div>
-                <div class="link-text" style="margin-top: 8px;"><a onclick="showForgot()">Lupa Kata Sandi?</a></div>
-            </div>
-
-            <div id="register-form" style="display: none;">
-                <div class="form-group">
-                    <label>Nama Lengkap</label>
-                    <input type="text" id="reg-name" placeholder="Masukkan nama lengkap" required>
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="reg-email" placeholder="Masukkan email aktif" required>
-                </div>
-                <div class="form-group">
-                    <label>Kata Sandi</label>
-                    <input type="password" id="reg-password" placeholder="Minimal 6 karakter" required>
-                    <button class="pwd-toggle" onclick="toggleView('reg-password')"><i data-lucide='eye' size='18'></i></button>
-                </div>
-                <button class="btn-login" onclick="registerEmail()">Daftar Akun</button>
-                <div class="link-text">Sudah punya akun? <a onclick="showLogin()">Masuk</a></div>
-            </div>
-
-            <div id="forgot-form" style="display: none;">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="forgot-email" placeholder="Masukkan email Anda" required>
-                </div>
-                <button class="btn-login" onclick="resetPassword()">Kirim Link Reset</button>
-                <div class="link-text"><a onclick="showLogin()">Kembali ke Halaman Masuk</a></div>
-            </div>
-        </div>
-    </div>
+<!-- MAIN CARD -->
+<div class="card" id="main-dashboard">
+    <h2>Admin Dashboard ( FARID ARIS )</h2>
+    <div class="status-box" id="db-status">Connecting to node...</div>
     
-    <div class='settings-modal' id='settings-modal'>
-        <div class='settings-card'>
-            <h3>Pengaturan</h3>
-            <label style='color:#00d2ff'>OpenRouter API Key (Global)</label>
-            <div class='api-control-row'>
-                <div class='pwd-container'>
-                    <input id='openrouter-key-input' placeholder='Masukkan sk-or-v1-...' type='password'/>
-                    <button class='pwd-toggle' onclick="toggleView('openrouter-key-input')"><i data-lucide='eye' size='18'></i></button>
-                </div>
-                <button class='btn-test-api' onclick="testConnection('or')">Tes</button>
-                <label class='switch'><input id='toggle-or' type='checkbox'/><span class='slider'></span></label>
-            </div>
-            <label style='color:#6366f1'>SiliconFlow API (DeepSeek)</label>
-            <div class='api-control-row'>
-                <div class='pwd-container'>
-                    <input id='silicon-key-input' placeholder='Masukkan sk-...' type='password'/>
-                    <button class='pwd-toggle' onclick="toggleView('silicon-key-input')"><i data-lucide='eye' size='18'></i></button>
-                </div>
-                <button class='btn-test-api' onclick="testConnection('sf')">Tes</button>
-                <label class='switch'><input id='toggle-sf' type='checkbox'/><span class='slider'></span></label>
-            </div>
-            <label>Groq API Key (Llama)</label>
-            <div class='api-control-row'>
-                <div class='pwd-container'>
-                    <input id='api-key-input' placeholder='Masukkan gsk_...' type='password'/>
-                    <button class='pwd-toggle' onclick="toggleView('api-key-input')"><i data-lucide='eye' size='18'></i></button>
-                </div>
-                <button class='btn-test-api' onclick="testConnection('gr')">Tes</button>
-                <label class='switch'><input id='toggle-gr' type='checkbox'/><span class='slider'></span></label>
-            </div>
-            <label>OpenAI API Key (ChatGPT)</label>
-            <div class='api-control-row'>
-                <div class='pwd-container'>
-                    <input id='openai-key-input' placeholder='Masukkan sk-...' type='password'/>
-                    <button class='pwd-toggle' onclick="toggleView('openai-key-input')"><i data-lucide='eye' size='18'></i></button>
-                </div>
-                <button class='btn-test-api' onclick="testConnection('oa')">Tes</button>
-                <label class='switch'><input id='toggle-oa' type='checkbox'/><span class='slider'></span></label>
-            </div>
-            <label>Google Gemini API Key</label>
-            <div class='api-control-row'>
-                <div class='pwd-container'>
-                    <input id='gemini-key-input' placeholder='Masukkan AIzaSy...' type='password'/>
-                    <button class='pwd-toggle' onclick="toggleView('gemini-key-input')"><i data-lucide='eye' size='18'></i></button>
-                </div>
-                <button class='btn-test-api' onclick="testConnection('gm')">Tes</button>
-                <label class='switch'><input id='toggle-gm' type='checkbox'/><span class='slider'></span></label>
-            </div>
-            <div class='modal-buttons'>
-                <button onclick='removePremium()' style='background:#ef4444; color:white; border:none; padding:12px 15px; border-radius:15px; cursor:pointer; font-weight:600;'>Reset Premium</button>
-                <button class='save-btn' onclick='saveSettings()'>Simpan</button>
-                <button onclick='closeSettings()' style='background:transparent; border:none; cursor:pointer; color:#ef4444; font-weight:600;'>Batal</button>
-            </div>
+    <div class="input-group">
+        <label>OpenRouter API</label>
+        <div class="input-wrapper">
+            <input id="or_key" placeholder="Not Set" type="text"/>
+            <button class="check-btn" onclick="testAPI('or')">CHECK</button>
+            <label class="switch">
+                <input id="or_status" type="checkbox"/>
+                <span class="slider"></span>
+            </label>
         </div>
     </div>
 
-    <div id='link-page' style='position: fixed; inset: 0; background: #f1f5f9; z-index: 99999; display: none; flex-direction: column;'>
-        <header style='background: white; padding: 15px 20px; display: flex; align-items: center; border-bottom: 1px solid #e2e8f0;'>
-            <button onclick='toggleLinkPage()' style='background:none; border:none; cursor:pointer; padding:5px; display:flex;'>
-                <i color='#1e293b' data-lucide='chevron-left' size='24'></i>
-            </button>
-            <b style='flex:1; text-align:center; color:#1e293b; margin-right:34px; font-size:18px;'>LAYANAN LINK</b>
-        </header>
-        <div style='flex:1; overflow-y: auto; padding: 20px;'>
-            <div class='form-card' onclick="window.location.href='https://alqurandigitalkolaka.blogspot.com'" style='cursor: pointer; margin-bottom: 15px;'>
-                <div style='display:flex; align-items:center; gap:15px;'>
-                    <div style='background:#10b981; color:white; padding:12px; border-radius:15px;'><i data-lucide='book-open' size='24'></i></div>
-                    <div>
-                        <div style='font-weight:700; color:#1e293b; font-size:16px;'>Alquran Digital Kolaka</div>
-                        <div style='font-size:12px; color:#64748b;'>Baca Al-Qur'an Digital Online</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class='form-card' onclick="window.location.href='https://www.fa-digitalstudio.web.id/'" style='cursor: pointer; margin-bottom: 15px;'>
-                <div style='display:flex; align-items:center; gap:15px;'>
-                    <div style='background:#6366f1; color:white; padding:12px; border-radius:15px;'><i data-lucide='globe' size='24'></i></div>
-                    <div>
-                        <div style='font-weight:700; color:#1e293b; font-size:16px;'>FA Digital Studio</div>
-                        <div style='font-size:12px; color:#64748b;'>Kunjungi website resmi kami</div>
-                    </div>
-                </div>
-            </div>
+    <div class="input-group">
+        <label>Groq API</label>
+        <div class="input-wrapper">
+            <input id="gr_key" placeholder="Not Set" type="text"/>
+            <button class="check-btn" onclick="testAPI('gr')">CHECK</button>
+            <label class="switch">
+                <input id="gr_status" type="checkbox"/>
+                <span class="slider"></span>
+            </label>
         </div>
     </div>
 
-    <div class='hidden-section' id='main-section'></div>
-    
-    <div class='app-container' id='main-app'>
-        <header>
-            <div style='display:flex; align-items:center; gap:10px;'>
-                <button onclick='toggleSidebar()' style='background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:5px;'>
-                    <i color='#1e293b' data-lucide='menu' size='24'></i>
-                </button>
-                <div id='user-avatar-container' style='width:38px; height:38px; background:white; border-radius:12px; display:flex; align-items:center; justify-content:center; color:white; overflow:hidden;'>
-                    <img id='header-bot-icon' src='https://i.ibb.co.com/cSR6TWgd/20260514-222136.png' style='width:100%; height:100%; object-fit:contain; padding:2px;'/>
-                </div>
-                <b id='user-greeting' style='color:#1e293b; font-size:18px;'>OJOL AI</b>
-            </div>
-            <div style='display:flex; align-items:center; gap:5px;'>
-                <button onclick='startNewChat()' style='background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:5px;'>
-                    <i color='#1e293b' data-lucide='square-pen' size='22'></i>
-                </button>
-                <div class='menu-container'>
-                    <button id='menu-trigger' onclick='toggleMenu(event)' style='background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:5px;'>
-                        <i color='#1e293b' data-lucide='more-vertical' size='24'></i>
-                    </button>
-                    <div class='dropdown-menu' id='dropdown-menu'>
-                        <div class='dropdown-item' onclick='showAbout()'>
-                            <i data-lucide='info' size='18'></i> Tentang
-                        </div>
-                        <div class='dropdown-item' onclick='toggleLinkPage()'>
-                            <i data-lucide='link' size='18'></i> Link Terkait
-                        </div>
-                        <div class='dropdown-item' onclick='toggleDonation()' style='color: #ef4444; font-weight:700;'>
-                            <i data-lucide='heart' size='18'></i> Donasi
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <div id='chat-box'>
-            <div class='welcome-wrapper'>
-                <div class='ai-avatar-animation'>
-                    <img src='https://i.ibb.co.com/cSR6TWgd/20260514-222136.png'/>
-                </div>
-                <div class='message ai-message' id='welcome-msg' style='text-align: center; border-radius: 24px;'>
-                    Halo. Ada yang bisa saya bantu hari ini?
-                    <div class='suggestions-container' style='max-width: 400px; gap: 8px; margin-top: 15px;'>
-                        <div class='suggestion-btn' onclick="quickSend('Bagaimana cara meningkatkan orderan?')" style='padding: 10px 15px; font-size: 13px;'>
-                            <div class='suggestion-icon' style='padding: 6px;'><i data-lucide='trending-up' size='16'></i></div>
-                            <span>Cara meningkatkan orderan</span>
-                        </div>
-                        <div class='suggestion-btn' onclick="quickSend('Kenapa orderan saya sepi?')" style='padding: 10px 15px; font-size: 13px;'>
-                            <div class='suggestion-icon' style='padding: 6px;'><i data-lucide='alert-circle' size='16'></i></div>
-                            <span>Kenapa order sepi</span>
-                        </div>
-                        <div class='suggestion-btn btn-gacor-premium' onclick="quickSend('TIPS GACOR OJOL')" style='padding: 10px 15px; font-size: 13px;'>
-                            <div class='suggestion-icon' style='padding: 6px; background: #6366f1; color: white;'><i data-lucide='zap' size='16'></i></div>
-                            <span style='font-weight: 800; color: #4f46e5; text-shadow: 0 0 10px rgba(99,102,241,0.2);'>TIPS GACOR OJOL</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class='input-dock'>
-            <div id='image-preview-container'>
-                <img id='image-preview' src='' style='max-height:80px; border-radius:10px; display:block;'/>
-                <button onclick='clearImage()' style='position:absolute; top:-10px; right:-10px; background:#ef4444; color:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2);'>&#215;</button>
-            </div>
-            <div class='input-wrapper'>
-                <input accept='image/*,.pdf,.doc,.docx,.txt' id='file-input' onchange='handleFileUpload(this)' type='file'/>
-                <button class='action-btn' onclick="document.getElementById('file-input').click()"><i data-lucide='paperclip' size='22'></i></button>
-                <textarea id='user-input' oninput='autoResize(this)' placeholder='Ketik pesan...' rows='1'></textarea>
-                <button id='send-btn' onclick='sendMessage()'><i data-lucide='send-horizontal' size='22'></i></button>
-            </div>
+    <div class="input-group">
+        <label>Gemini API</label>
+        <div class="input-wrapper">
+            <input id="gm_key" placeholder="Not Set" type="text"/>
+            <button class="check-btn" onclick="testAPI('gm')">CHECK</button>
+            <label class="switch">
+                <input id="gm_status" type="checkbox"/>
+                <span class="slider"></span>
+            </label>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <div class="input-group">
+        <label>Maintenance Control</label>
+        <select id="maint_mode">
+            <option value="false">🟢 Aktifkan website</option>
+            <option value="true">🔴 Maintenance</option>
+        </select>
+    </div>
 
-    <script>
-    // ============================================================
-    // FUNGSI BARU TAMBAHAN — TIDAK MENGUBAH APA PUN DI app.js
-    // ============================================================
+    <button class="save-btn" id="update-btn" onclick="updateConfig()">Save Configuration</button>
+    <button class="logout-btn" onclick="logout()">Logout System</button>
+</div>
 
-    // --- BUKA / TUTUP HALAMAN ---
-    function toggleProfile(){
-        const p = document.getElementById('profile-page');
-        p.classList.toggle('active');
-        if(p.classList.contains('active')) loadProfileData();
-        lucide.createIcons();
-    }
-    function togglePrivacy(){document.getElementById('privacy-page').classList.toggle('active');lucide.createIcons();}
-    function toggleTos(){document.getElementById('tos-page').classList.toggle('active');lucide.createIcons();}
+<script>
+    const _0xPR2 = "YWRtaW5vam9sa29sYWth"; 
 
-    // --- MUAT DATA PROFIL DARI FIREBASE ---
-    function loadProfileData(){
-        const user = firebase.auth().currentUser;
-        if(!user) return;
-        document.getElementById('edit-email').value = user.email || '';
-        firebase.database().ref('users/'+user.uid).once('value', snap=>{
-            const d = snap.val() || {};
-            document.getElementById('edit-name').value = d.displayName || user.displayName || '';
-            if(d.photoURL){
-                document.getElementById('preview-avatar').src = d.photoURL;
-                document.getElementById('header-bot-icon').src = d.photoURL;
-            }
-            if(d.displayName) document.getElementById('user-greeting').innerText = d.displayName;
-        });
-    }
-
-    // --- SIMPAN NAMA ---
-    function saveProfile(){
-        const user = firebase.auth().currentUser;
-        if(!user) return;
-        const name = document.getElementById('edit-name').value.trim();
-        if(!name) return Swal.fire('','Nama tidak boleh kosong','warning');
-        Swal.fire({title:'Menyimpan...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-        firebase.database().ref('users/'+user.uid).update({displayName:name})
-        .then(()=> user.updateProfile({displayName:name}))
-        .then(()=>{
-            document.getElementById('user-greeting').innerText = name;
-            Swal.fire('Berhasil','Profil diperbarui','success');
-        }).catch(e=>Swal.fire('Gagal',e.message,'error'));
-    }
-
-    // --- KOMPRES GAMBAR OTOMATIS → MAX 600px, kualitas 0.7 ---
-    function compressImage(file, maxW=600, quality=0.7){
-        return new Promise(res=>{
-            const r = new FileReader();
-            r.onload = e=>{
-                const img = new Image();
-                img.onload = ()=>{
-                    const c = document.createElement('canvas');
-                    let w=img.width,h=img.height;
-                    if(w>maxW){h=h*maxW/w;w=maxW;}
-                    c.width=w;c.height=h;
-                    c.getContext('2d').drawImage(img,0,0,w,h);
-                    c.toBlob(blob=>res(new File([blob],'avatar.jpg',{type:'image/jpeg'})),'image/jpeg',quality);
-                };
-                img.src=e.target.result;
-            };
-            r.readAsDataURL(file);
-        });
-    }
-
-    // --- UPLOAD FOTO PROFIL TERKOMPRES KE FIREBASE STORAGE ---
-    async function compressAndUploadAvatar(inp){
-        const f = inp.files[0]; if(!f) return;
-        const user = firebase.auth().currentUser; if(!user) return;
-        Swal.fire({title:'Memproses foto...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-        try{
-            const small = await compressImage(f);
-            const ref = firebase.storage().ref('avatars/'+user.uid+'.jpg');
-            const snap = await ref.put(small);
-            const url = await snap.ref.getDownloadURL();
-            await firebase.database().ref('users/'+user.uid).update({photoURL:url});
-            await user.updateProfile({photoURL:url});
-            document.getElementById('preview-avatar').src = url;
-            document.getElementById('header-bot-icon').src = url;
-            Swal.fire('Berhasil','Foto profil diperbarui','success');
-        }catch(e){Swal.fire('Gagal',e.message,'error');}
-        inp.value='';
-    }
-
-    // --- RESET PASSWORD DARI HALAMAN PROFIL ---
-    function resetPasswordFromProfile(){
-        const email = document.getElementById('edit-email').value;
-        if(!email) return;
-        Swal.fire({
-            title:'Reset Kata Sandi?',
-            text:`Link akan dikirim ke ${email}`,
-            icon:'question',showCancelButton:true,confirmButtonText:'Kirim'
-        }).then(ok=>{
-            if(!ok.isConfirmed) return;
-            Swal.fire({title:'Mengirim...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-            firebase.auth().sendPasswordResetEmail(email)
-            .then(()=>Swal.fire('Terkirim','Cek kotak masuk / spam email Anda','success'))
-            .catch(e=>Swal.fire('Gagal',e.message,'error'));
-        });
-    }
-
-    // --- AUTO REFRESH IKON LUCIDE SETELAH SIDEBAR DIMODIFIKASI ---
-    const _origToggle = toggleSidebar;
-    toggleSidebar = function(){
-        _origToggle.apply(this,arguments);
-        setTimeout(()=>lucide.createIcons(),100);
+    window.onload = () => {
+        const savedPass = localStorage.getItem('admin_session_key');
+        if(savedPass) {
+            document.getElementById('admin_pass').value = atob(savedPass);
+            document.getElementById('remember_pass').checked = true;
+            document.getElementById('main-header').style.display = 'flex';
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-dashboard').style.display = 'block';
+            initFirebase();
+        } else {
+            document.getElementById('main-header').style.display = 'none';
+        }
     };
 
-    // --- MUAT DATA SAAT USER SUDAH LOGIN ---
-    firebase.auth().onAuthStateChanged(u=>{ if(u) setTimeout(loadProfileData,800); });
-    </script>
+    function togglePassword() {
+        const passInput = document.getElementById('admin_pass');
+        const icon = document.querySelector('.toggle-password');
+        passInput.type = passInput.type === 'password' ? 'text' : 'password';
+        icon.innerText = passInput.type === 'password' ? '👁️' : '👀';
+    }
+
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+        }
+    });
+
+    function checkLogin() {
+        const input = document.getElementById('admin_pass').value;
+        const remember = document.getElementById('remember_pass').checked;
+
+        if(btoa(input) === _0xPR2) {
+            document.getElementById('main-header').style.display = 'flex';
+            
+            if(remember) {
+                localStorage.setItem('admin_session_key', btoa(input));
+            } else {
+                localStorage.removeItem('admin_session_key');
+            }
+            
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-dashboard').style.display = 'block';
+            initFirebase();
+            Toast.fire({ icon: 'success', title: 'Akses diterima. Selamat datang!' });
+        } else {
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Akses Ditolak', 
+                text: 'Kata sandi tidak valid. Silahkan coba lagi.',
+                confirmButtonText: 'Coba Lagi'
+            });
+        }
+    }
+
+    function logout() {
+        Swal.fire({
+            title: 'Logout?',
+            text: "Sesi akan diakhiri.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Keluar',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('main-header').style.display = 'none';
+                document.getElementById('main-menu').style.display = 'none';
+                
+                document.getElementById('login-overlay').style.display = 'block';
+                document.getElementById('main-dashboard').style.display = 'none';
+                localStorage.removeItem('admin_session_key');
+                document.getElementById('admin_pass').value = '';
+            }
+        });
+    }
+
+    document.getElementById('admin_pass').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') checkLogin();
+    });
+
+    // --- KONFIGURASI FIREBASE ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyBj86r9p6TzIc9TmrXAzQX2LRTe8K7Umro",
+        authDomain: "ojolai.firebaseapp.com",
+        databaseURL: "https://ojolai-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "ojolai",
+        storageBucket: "ojolai.firebasestorage.app",
+        messagingSenderId: "7449834990",
+        appId: "1:7449834990:web:53c321edd8d479654f0aff",
+        measurementId: "G-ZEKT2CQD6Q"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    // Otomatis simpan data pengguna yang login
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            const waktuSekarang = new Date().toLocaleString('id-ID');
+            const userRef = db.ref(`users_auth/${user.uid}`);
+            userRef.once('value', snapshot => {
+                if (!snapshot.exists()) {
+                    userRef.set({
+                        email: user.email,
+                        nama: user.displayName || 'Belum diisi',
+                        provider: user.providerData[0]?.providerId || 'email',
+                        diblokir: false,
+                        dibuat_pada: waktuSekarang,
+                        terakhir_login: waktuSekarang,
+                        password: '-'
+                    });
+                } else {
+                    if (snapshot.val().diblokir === true) {
+                        auth.signOut();
+                        Swal.fire({icon: 'error', title: 'Akses Ditolak', text: 'Akun Anda telah diblokir!'});
+                        return;
+                    }
+                    userRef.update({ terakhir_login: waktuSekarang });
+                }
+            });
+        }
+    });
+
+    function initFirebase() {
+        const statusBox = document.getElementById('db-status');
+        db.ref('config').once('value')
+        .then(snap => {
+            const data = snap.val() || {};
+            statusBox.innerText = "System Synced & Secured";
+            statusBox.classList.add('status-online');
+            document.getElementById('or_key').value = data.openrouter_key || '';
+            document.getElementById('gr_key').value = data.groq_key || '';
+            document.getElementById('gm_key').value = data.gemini_key || '';
+            document.getElementById('or_status').checked = !!data.or_active;
+            document.getElementById('gr_status').checked = !!data.gr_active;
+            document.getElementById('gm_status').checked = !!data.gm_active;
+            document.getElementById('maint_mode').value = String(data.is_maintenance || false);
+        })
+        .catch(error => {
+            statusBox.innerText = "System Error: " + error.message;
+            statusBox.style.color = "#ef4444";
+        });
+    }
+
+    async function testAPI(type) {
+        const key = document.getElementById(type + '_key').value.trim();
+        if(!key) return Toast.fire({ icon: 'info', title: 'API Key masih kosong' });
+
+        Swal.fire({ title: 'Memverifikasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            let url, headers = {};
+            if(type === 'gr') {
+                url = 'https://api.groq.com/openai/v1/models';
+                headers.Authorization = `Bearer ${key}`;
+            } else if(type === 'or') {
+                url = 'https://openrouter.ai/api/v1/models';
+                headers.Authorization = `Bearer ${key}`;
+            } else {
+                url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
+            }
+            const res = await fetch(url, { headers });
+            res.ok
+                ? Swal.fire({ icon: 'success', title: 'Valid', text: 'API Key dapat digunakan' })
+                : Swal.fire({ icon: 'error', title: 'Tidak Valid', text: 'Key salah atau kuota habis' });
+        } catch {
+            Swal.fire('Error', 'Tidak dapat terhubung ke server', 'error');
+        }
+    }
+
+    function updateConfig() {
+        const btn = document.getElementById('update-btn');
+        btn.innerText = "Menyimpan...";
+        btn.disabled = true;
+
+        const updatedData = {
+            openrouter_key: document.getElementById('or_key').value.trim(),
+            groq_key: document.getElementById('gr_key').value.trim(),
+            gemini_key: document.getElementById('gm_key').value.trim(),
+            or_active: document.getElementById('or_status').checked,
+            gr_active: document.getElementById('gr_status').checked,
+            gm_active: document.getElementById('gm_status').checked,
+            is_maintenance: document.getElementById('maint_mode').value === 'true'
+        };
+
+        db.ref('config').set(updatedData)
+            .then(() => Toast.fire({ icon: 'success', title: 'Konfigurasi tersimpan' }))
+            .catch(err => Toast.fire({ icon: 'error', title: 'Gagal: ' + err.message }))
+            .finally(() => { btn.innerText = "Save Configuration"; btn.disabled = false; });
+    }
+
+    function toggleMenu() {
+        const menu = document.getElementById('main-menu');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    document.addEventListener('click', e => {
+        if(!e.target.matches('.menu-toggle')) document.getElementById('main-menu').style.display = 'none';
+    });
+
+    // ✅ Riwayat Login + tombol tambah password
+    function openRiwayatLogin() {
+        db.ref('users_auth').once('value')
+        .then(snap => {
+            const users = [];
+            snap.forEach(child => {
+                const d = child.val() || {};
+                users.push({
+                    uid: child.key,
+                    email: d.email || '-',
+                    nama: d.nama || 'Belum diisi',
+                    password: d.password || '-',
+                    diblokir: !!d.diblokir,
+                    terakhir_login: d.terakhir_login || '-'
+                });
+            });
+            users.sort((a,b) => new Date(b.terakhir_login) - new Date(a.terakhir_login));
+
+            let html = `<div class="table-container"><table class="history-table">
+                <thead><tr><th>Email</th><th>Nama</th><th>Password</th><th>Status</th><th>Terakhir Login</th><th>Aksi</th></tr></thead><tbody>`;
+            if(users.length === 0) html += `<tr><td colspan="6" style="text-align:center; padding:20px;">Belum ada data</td></tr>`;
+            else users.forEach(u => {
+                html += `<tr>
+                    <td>${u.email}</td>
+                    <td>${u.nama}</td>
+                    <td>${u.password}</td>
+                    <td>${u.diblokir ? '❌ Diblokir' : '✅ Aktif'}</td>
+                    <td>${u.terakhir_login}</td>
+                    <td><button class="action-btn" onclick="setPassword('${u.uid}')">Isi Password</button></td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+            Swal.fire({ title: '📋 Riwayat Login', html, width: '95%', confirmButtonText: 'Tutup' });
+        })
+        .catch(err => Swal.fire('Error', 'Gagal baca data: ' + err.message, 'error'));
+    }
+
+    // ✅ Fungsi untuk mengisi password
+    function setPassword(uid) {
+        Swal.fire({
+            title: 'Masukkan Password',
+            input: 'text',
+            inputPlaceholder: 'Tulis password akun ini',
+            showCancelButton: true,
+            confirmButtonText: 'Simpan',
+            cancelButtonText: 'Batal'
+        }).then(res => {
+            if (!res.isConfirmed || !res.value) return;
+            db.ref(`users_auth/${uid}`).update({ password: res.value })
+            .then(() => {
+                Toast.fire({ icon: 'success', title: 'Password tersimpan' });
+                openRiwayatLogin();
+            })
+            .catch(err => Toast.fire({ icon: 'error', title: 'Gagal: ' + err.message }));
+        });
+    }
+
+</script>
 </body>
 </html>
