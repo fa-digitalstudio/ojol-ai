@@ -7,7 +7,7 @@
     
     <meta name="theme-color" content="#1e293b"/>
     <meta name="apple-mobile-web-app-capable" content="yes"/>
-    <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+    <meta name="apple-mobile-web-status-bar-style" content="default"/>
     <meta name="apple-mobile-web-app-title" content="OJOL AI"/>
     <link rel="apple-touch-icon" href="https://i.ibb.co.com/cSR6TWgd/20260514-222136.png"/>
     <link rel="manifest" href="manifest.json"/>
@@ -21,7 +21,21 @@
     <script src='https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js'></script>
     <script src='https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js'></script>
     <script src='https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js'></script>
+    <script src='https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+
+    <style>
+        /* ==== CSS TAMBAHAN FITUR BARU ==== */
+        .page-full{position:fixed;inset:0;background:#f1f5f9;z-index:9999;display:none;flex-direction:column;}
+        .page-full.active{display:flex;}
+        .profile-avatar-wrap{width:110px;height:110px;border-radius:50%;margin:0 auto 15px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;cursor:pointer;border:3px solid #6366f1;}
+        .profile-avatar-wrap img{width:100%;height:100%;object-fit:cover;}
+        .avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;opacity:0;transition:.2s}
+        .profile-avatar-wrap:hover .avatar-overlay{opacity:1}
+        .content-card{background:#fff;border-radius:16px;padding:18px;margin:15px;box-shadow:0 1px 2px #0000000a;}
+        .content-card h4{margin:0 0 10px;color:#1e293b}
+        .content-card p,.content-card li{color:#475569;font-size:14px;line-height:1.7}
+    </style>
 </head>
 <body onclick='closeDropdownOuter(event)'>
 
@@ -31,6 +45,105 @@
                 <i data-lucide='x' size='22'></i>
             </button>
             <img src='https://i.ibb.co.com/ynrvKYWM/file-00000000d7b47208bfd040beb1cb19de.png'/>
+        </div>
+    </div>
+
+    <!-- ============== HALAMAN BARU: PROFIL ============== -->
+    <div id='profile-page' class='page-full'>
+        <header style='background:white;padding:15px 20px;display:flex;align-items:center;border-bottom:1px solid #e2e8f0;'>
+            <button onclick='toggleProfile()' style='background:none;border:none;cursor:pointer;padding:5px;'>
+                <i color='#1e293b' data-lucide='chevron-left' size='24'></i>
+            </button>
+            <b style='flex:1;text-align:center;color:#1e293b;margin-right:34px;font-size:18px;'>PROFIL SAYA</b>
+        </header>
+        <div style='flex:1;overflow-y:auto;padding:20px;'>
+            <div class='content-card' style='text-align:center;'>
+                <input type='file' id='avatar-input' accept='image/*' style='display:none' onchange='compressAndUploadAvatar(this)'>
+                <div class='profile-avatar-wrap' onclick="document.getElementById('avatar-input').click()">
+                    <img id='preview-avatar' src='https://i.ibb.co.com/cSR6TWgd/20260514-222136.png' alt='avatar'>
+                    <div class='avatar-overlay'>
+                        <i data-lucide='camera' size='22'></i>
+                        <span style='margin-top:4px'>Ubah Foto</span>
+                    </div>
+                </div>
+                <div style='font-size:12px;color:#64748b;margin-top:6px'>Klik foto untuk mengubah · otomatis dikompresi</div>
+
+                <div class='form-group' style='text-align:left;margin-top:18px'>
+                    <label>Nama Lengkap</label>
+                    <input type='text' id='edit-name' placeholder='Nama Anda'>
+                </div>
+                <div class='form-group' style='text-align:left'>
+                    <label>Email (tidak bisa diubah)</label>
+                    <input type='email' id='edit-email' readonly style='background:#f1f5f9;color:#64748b'>
+                </div>
+
+                <button onclick='saveProfile()' style='width:100%;padding:14px;background:#6366f1;color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin-top:6px;'>
+                    <i data-lucide='save' size='16' style='vertical-align:middle;margin-right:6px'></i>SIMPAN PERUBAHAN
+                </button>
+
+                <hr style='border:none;border-top:1px dashed #e2e8f0;margin:20px 0'>
+
+                <button onclick='resetPasswordFromProfile()' style='width:100%;padding:13px;background:#fff;color:#ea580c;border:1px solid #fed7aa;border-radius:12px;font-weight:600;cursor:pointer;'>
+                    <i data-lucide='key-round' size='16' style='vertical-align:middle;margin-right:6px'></i>RESET KATA SANDI
+                </button>
+                <div style='font-size:11px;color:#94a3b8;margin-top:6px'>Link akan dikirim ke email Anda</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============== HALAMAN BARU: KEBIJAKAN PRIVASI ============== -->
+    <div id='privacy-page' class='page-full'>
+        <header style='background:white;padding:15px 20px;display:flex;align-items:center;border-bottom:1px solid #e2e8f0;'>
+            <button onclick='togglePrivacy()' style='background:none;border:none;cursor:pointer;padding:5px;'>
+                <i color='#1e293b' data-lucide='chevron-left' size='24'></i>
+            </button>
+            <b style='flex:1;text-align:center;color:#1e293b;margin-right:34px;font-size:18px;'>KEBIJAKAN PRIVASI</b>
+        </header>
+        <div style='flex:1;overflow-y:auto;padding:10px 0;'>
+            <div class='content-card'>
+                <h4>1. Data yang Kami Kumpulkan</h4>
+                <p>Kami mengumpulkan nama, alamat email, foto profil, serta riwayat percakapan dengan AI semata‑mata untuk keperluan autentikasi akun dan penyimpanan data pribadi Anda di layanan OJOL AI ASISTEN.</p>
+            </div>
+            <div class='content-card'>
+                <h4>2. Penyimpanan & Keamanan</h4>
+                <p>Data disimpan di layanan Google Firebase dengan standar enkripsi. Kami tidak pernah membagikan, menjual, atau menyewakan data pribadi Anda kepada pihak ketiga tanpa persetujuan sah.</p>
+            </div>
+            <div class='content-card'>
+                <h4>3. Hak Pengguna</h4>
+                <p>Anda berhak mengubah data profil, meminta penghapusan akun beserta seluruh datanya, serta keluar kapan saja melalui menu yang tersedia.</p>
+            </div>
+            <div class='content-card'>
+                <h4>4. Perubahan Kebijakan</h4>
+                <p>Kebijakan ini dapat diperbarui sewaktu‑waktu. Perubahan besar akan kami informasikan melalui pembaruan aplikasi.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============== HALAMAN BARU: KETENTUAN LAYANAN ============== -->
+    <div id='tos-page' class='page-full'>
+        <header style='background:white;padding:15px 20px;display:flex;align-items:center;border-bottom:1px solid #e2e8f0;'>
+            <button onclick='toggleTos()' style='background:none;border:none;cursor:pointer;padding:5px;'>
+                <i color='#1e293b' data-lucide='chevron-left' size='24'></i>
+            </button>
+            <b style='flex:1;text-align:center;color:#1e293b;margin-right:34px;font-size:18px;'>KETENTUAN LAYANAN</b>
+        </header>
+        <div style='flex:1;overflow-y:auto;padding:10px 0;'>
+            <div class='content-card'>
+                <h4>1. Penerimaan Ketentuan</h4>
+                <p>Dengan mendaftar dan menggunakan OJOL AI ASISTEN, Anda dianggap telah membaca, memahami, dan menyetujui seluruh syarat dan ketentuan yang berlaku.</p>
+            </div>
+            <div class='content-card'>
+                <h4>2. Penggunaan Layanan</h4>
+                <p>Layanan ini bertujuan sebagai asisten informasi. Jawaban AI adalah saran dan bukan keputusan mutlak. Pengguna bertanggung jawab penuh atas setiap tindakan yang diambil berdasarkan hasil percakapan.</p>
+            </div>
+            <div class='content-card'>
+                <h4>3. Larangan</h4>
+                <p>Dilarang keras menggunakan layanan untuk hal‑hal yang melanggar hukum, menyebarkan ujaran kebencian, penipuan, atau merugikan pihak lain.</p>
+            </div>
+            <div class='content-card'>
+                <h4>4. Pembatasan Tanggung Jawab</h4>
+                <p>Pengembang tidak bertanggung jawab atas kerugian langsung maupun tidak langsung yang timbul akibat penggunaan atau ketidaktersediaan layanan.</p>
+            </div>
         </div>
     </div>
 
@@ -81,7 +194,20 @@
         </button>
         <div class='history-list' id='history-list'></div>
         <div class='sidebar-footer'>
-            <button onclick='toggleDonation()' style='width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; color: #1e293b; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-bottom:5px;'>
+
+            <!-- ========== TOMBOL BARU DI SIDEBAR ========== -->
+            <button onclick='toggleProfile();toggleSidebar()' style='width:100%;padding:12px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;color:#1e293b;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:5px;'>
+                <i color='#0ea5e9' data-lucide='user-circle-2' size='18'></i> Profil Saya
+            </button>
+            <button onclick='togglePrivacy();toggleSidebar()' style='width:100%;padding:12px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;color:#1e293b;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:5px;'>
+                <i color='#10b981' data-lucide='shield-check' size='18'></i> Kebijakan Privasi
+            </button>
+            <button onclick='toggleTos();toggleSidebar()' style='width:100%;padding:12px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;color:#1e293b;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:5px;'>
+                <i color='#f59e0b' data-lucide='file-text' size='18'></i> Ketentuan Layanan
+            </button>
+            <!-- ========== AKHIR TOMBOL BARU ========== -->
+
+            <button onclick='toggleDonation();toggleSidebar()' style='width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; color: #1e293b; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-bottom:5px;'>
                 <i color='#ef4444' data-lucide='heart' size='18'></i> Donasi Pengembang
             </button>
             <button class='btn-logout-sidebar' onclick='logout()'>
@@ -301,5 +427,118 @@
     </div>
 
     <script src="app.js"></script>
+
+    <script>
+    // ============================================================
+    // FUNGSI BARU TAMBAHAN — TIDAK MENGUBAH APA PUN DI app.js
+    // ============================================================
+
+    // --- BUKA / TUTUP HALAMAN ---
+    function toggleProfile(){
+        const p = document.getElementById('profile-page');
+        p.classList.toggle('active');
+        if(p.classList.contains('active')) loadProfileData();
+        lucide.createIcons();
+    }
+    function togglePrivacy(){document.getElementById('privacy-page').classList.toggle('active');lucide.createIcons();}
+    function toggleTos(){document.getElementById('tos-page').classList.toggle('active');lucide.createIcons();}
+
+    // --- MUAT DATA PROFIL DARI FIREBASE ---
+    function loadProfileData(){
+        const user = firebase.auth().currentUser;
+        if(!user) return;
+        document.getElementById('edit-email').value = user.email || '';
+        firebase.database().ref('users/'+user.uid).once('value', snap=>{
+            const d = snap.val() || {};
+            document.getElementById('edit-name').value = d.displayName || user.displayName || '';
+            if(d.photoURL){
+                document.getElementById('preview-avatar').src = d.photoURL;
+                document.getElementById('header-bot-icon').src = d.photoURL;
+            }
+            if(d.displayName) document.getElementById('user-greeting').innerText = d.displayName;
+        });
+    }
+
+    // --- SIMPAN NAMA ---
+    function saveProfile(){
+        const user = firebase.auth().currentUser;
+        if(!user) return;
+        const name = document.getElementById('edit-name').value.trim();
+        if(!name) return Swal.fire('','Nama tidak boleh kosong','warning');
+        Swal.fire({title:'Menyimpan...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+        firebase.database().ref('users/'+user.uid).update({displayName:name})
+        .then(()=> user.updateProfile({displayName:name}))
+        .then(()=>{
+            document.getElementById('user-greeting').innerText = name;
+            Swal.fire('Berhasil','Profil diperbarui','success');
+        }).catch(e=>Swal.fire('Gagal',e.message,'error'));
+    }
+
+    // --- KOMPRES GAMBAR OTOMATIS → MAX 600px, kualitas 0.7 ---
+    function compressImage(file, maxW=600, quality=0.7){
+        return new Promise(res=>{
+            const r = new FileReader();
+            r.onload = e=>{
+                const img = new Image();
+                img.onload = ()=>{
+                    const c = document.createElement('canvas');
+                    let w=img.width,h=img.height;
+                    if(w>maxW){h=h*maxW/w;w=maxW;}
+                    c.width=w;c.height=h;
+                    c.getContext('2d').drawImage(img,0,0,w,h);
+                    c.toBlob(blob=>res(new File([blob],'avatar.jpg',{type:'image/jpeg'})),'image/jpeg',quality);
+                };
+                img.src=e.target.result;
+            };
+            r.readAsDataURL(file);
+        });
+    }
+
+    // --- UPLOAD FOTO PROFIL TERKOMPRES KE FIREBASE STORAGE ---
+    async function compressAndUploadAvatar(inp){
+        const f = inp.files[0]; if(!f) return;
+        const user = firebase.auth().currentUser; if(!user) return;
+        Swal.fire({title:'Memproses foto...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+        try{
+            const small = await compressImage(f);
+            const ref = firebase.storage().ref('avatars/'+user.uid+'.jpg');
+            const snap = await ref.put(small);
+            const url = await snap.ref.getDownloadURL();
+            await firebase.database().ref('users/'+user.uid).update({photoURL:url});
+            await user.updateProfile({photoURL:url});
+            document.getElementById('preview-avatar').src = url;
+            document.getElementById('header-bot-icon').src = url;
+            Swal.fire('Berhasil','Foto profil diperbarui','success');
+        }catch(e){Swal.fire('Gagal',e.message,'error');}
+        inp.value='';
+    }
+
+    // --- RESET PASSWORD DARI HALAMAN PROFIL ---
+    function resetPasswordFromProfile(){
+        const email = document.getElementById('edit-email').value;
+        if(!email) return;
+        Swal.fire({
+            title:'Reset Kata Sandi?',
+            text:`Link akan dikirim ke ${email}`,
+            icon:'question',showCancelButton:true,confirmButtonText:'Kirim'
+        }).then(ok=>{
+            if(!ok.isConfirmed) return;
+            Swal.fire({title:'Mengirim...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+            firebase.auth().sendPasswordResetEmail(email)
+            .then(()=>Swal.fire('Terkirim','Cek kotak masuk / spam email Anda','success'))
+            .catch(e=>Swal.fire('Gagal',e.message,'error'));
+        });
+    }
+
+    // --- AUTO REFRESH IKON LUCIDE SETELAH SIDEBAR DIMODIFIKASI ---
+    const _origToggle = toggleSidebar;
+    toggleSidebar = function(){
+        _origToggle.apply(this,arguments);
+        setTimeout(()=>lucide.createIcons(),100);
+    };
+
+    // --- MUAT DATA SAAT USER SUDAH LOGIN ---
+    firebase.auth().onAuthStateChanged(u=>{ if(u) setTimeout(loadProfileData,800); });
+    </script>
 </body>
 </html>
